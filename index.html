@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
   <meta charset="utf-8">
-  <title>My Timeline</title>
+  <title>Timeline</title>
 
   <link rel="stylesheet" href="https://cdn.knightlab.com/libs/timeline3/latest/css/timeline.css">
   <link rel="stylesheet" href="timeline-theme.css">
@@ -11,6 +11,49 @@
     html, body {
       margin: 0;
       padding: 0;
+      background: #ffffff;
+      font-family: Arial, sans-serif;
+    }
+
+    .timeline-legend {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+      padding: 14px 16px;
+      border-bottom: 1px solid #e5e7eb;
+      background: #ffffff;
+      position: sticky;
+      top: 0;
+      z-index: 1000;
+    }
+
+    .timeline-legend button {
+      border: none;
+      border-radius: 999px;
+      padding: 8px 12px;
+      cursor: pointer;
+      font-size: 14px;
+      color: white;
+    }
+
+    .timeline-legend button[data-filter="all"] {
+      background: #4b5563;
+    }
+
+    .timeline-legend button[data-filter="hyperfertility"] {
+      background: #7c3aed;
+    }
+
+    .timeline-legend button[data-filter="pain"] {
+      background: #dc2626;
+    }
+
+    .timeline-legend button[data-filter="inferiority"] {
+      background: #2563eb;
+    }
+
+    .timeline-legend button[data-filter="utility"] {
+      background: #16a34a;
     }
 
     #timeline-embed {
@@ -18,36 +61,6 @@
       height: 650px;
     }
 
-    /* category colors for markers */
-    .tl-timemarker.tag-policy .tl-timemarker-content-container {
-      background: #b91c1c !important;
-      color: white !important;
-    }
-
-    .tl-timemarker.tag-medical-myth .tl-timemarker-content-container {
-      background: #2563eb !important;
-      color: white !important;
-    }
-
-    .tl-timemarker.tag-activism .tl-timemarker-content-container {
-      background: #059669 !important;
-      color: white !important;
-    }
-
-    .tl-timemarker.tag-sterilization .tl-timemarker-content-container {
-      background: #d97706 !important;
-      color: white !important;
-    }
-
-    /* optional: color active marker too */
-    .tl-timemarker.tag-policy.tl-timemarker-active .tl-timemarker-content-container,
-    .tl-timemarker.tag-medical-myth.tl-timemarker-active .tl-timemarker-content-container,
-    .tl-timemarker.tag-activism.tl-timemarker-active .tl-timemarker-content-container,
-    .tl-timemarker.tag-sterilization.tl-timemarker-active .tl-timemarker-content-container {
-      filter: brightness(0.9);
-    }
-
-    /* optional: tag pill on slide headlines */
     .event-pill {
       display: inline-block;
       padding: 2px 8px;
@@ -57,89 +70,111 @@
       margin-right: 8px;
       vertical-align: middle;
       color: white;
+      line-height: 1.6;
     }
 
-    .event-pill.tag-policy { background: #b91c1c; }
-    .event-pill.tag-medical-myth { background: #2563eb; }
-    .event-pill.tag-activism { background: #059669; }
-    .event-pill.tag-sterilization { background: #d97706; }
+    .event-pill.tag-hyperfertility {
+      background: #7c3aed;
+    }
 
-    /* optional dimming for filtering */
+    .event-pill.tag-pain {
+      background: #dc2626;
+    }
+
+    .event-pill.tag-inferiority {
+      background: #2563eb;
+    }
+
+    .event-pill.tag-utility {
+      background: #16a34a;
+    }
+
+    .tl-timemarker.tag-hyperfertility .tl-timemarker-content-container {
+      background: #7c3aed !important;
+      color: white !important;
+    }
+
+    .tl-timemarker.tag-pain .tl-timemarker-content-container {
+      background: #dc2626 !important;
+      color: white !important;
+    }
+
+    .tl-timemarker.tag-inferiority .tl-timemarker-content-container {
+      background: #2563eb !important;
+      color: white !important;
+    }
+
+    .tl-timemarker.tag-utility .tl-timemarker-content-container {
+      background: #16a34a !important;
+      color: white !important;
+    }
+
     .tl-timemarker.is-dimmed {
-      opacity: 0.25;
-    }
-
-    .timeline-legend {
-      padding: 12px 16px;
-      font-family: sans-serif;
-      display: flex;
-      gap: 8px;
-      flex-wrap: wrap;
-      align-items: center;
-    }
-
-    .timeline-legend button {
-      border: none;
-      border-radius: 999px;
-      padding: 8px 12px;
-      cursor: pointer;
+      opacity: 0.22;
+      transition: opacity 0.2s ease;
     }
   </style>
 </head>
 <body>
 
   <div class="timeline-legend">
-    <button data-filter="all">Show all</button>
-    <button data-filter="policy">Policy</button>
-    <button data-filter="medical-myth">Medical Myth</button>
-    <button data-filter="activism">Activism</button>
-    <button data-filter="sterilization">Sterilization</button>
+    <button data-filter="all">All</button>
+    <button data-filter="hyperfertility">Hyperfertility & sexual deviance</button>
+    <button data-filter="pain">Pain insensitivity</button>
+    <button data-filter="inferiority">Biological differences & inferiority</button>
+    <button data-filter="utility">Biological utility</button>
   </div>
 
   <div id="timeline-embed"></div>
 
   <script src="https://cdn.knightlab.com/libs/timeline3/latest/js/timeline.js"></script>
   <script>
-    const source =
-      "https://docs.google.com/spreadsheets/d/e/2PACX-1vSrFsEAi3oN7zJZMshHsqHT7jAk0Nt4iM_uL03vN5KmABk79tknJ-NXnBS1V6WulB_lJwg4b2qmi_FC/pubhtml";
+    const source = "https://docs.google.com/spreadsheets/d/e/2PACX-1vSrFsEAi3oN7zJZMshHsqHT7jAk0Nt4iM_uL03vN5KmABk79tknJ-NXnBS1V6WulB_lJwg4b2qmi_FC/pubhtml";
 
     const timeline = new TL.Timeline("timeline-embed", source, {
       initial_zoom: 2
     });
 
-    function slugify(text) {
-      return (text || "")
-        .toString()
-        .trim()
-        .toLowerCase()
-        .replace(/\s+/g, "-")
-        .replace(/[^\w-]+/g, "")
-        .replace(/--+/g, "-");
+    function getTagFromText(text) {
+      const t = (text || "").toLowerCase();
+
+      if (t.includes("hyperfertility")) return "hyperfertility";
+      if (t.includes("sexual deviance")) return "hyperfertility";
+      if (t.includes("pain insensitivity")) return "pain";
+      if (t.includes("pain")) return "pain";
+      if (t.includes("biological differences")) return "inferiority";
+      if (t.includes("inferiority")) return "inferiority";
+      if (t.includes("biological utility")) return "utility";
+      if (t.includes("utility")) return "utility";
+
+      return null;
     }
 
-    function inferTagFromMarker(markerEl) {
-      const label = markerEl.querySelector(".tl-headline, .tl-timemarker-content")
-        ?.textContent?.toLowerCase() || "";
-
-      if (label.includes("policy")) return "policy";
-      if (label.includes("medical myth")) return "medical-myth";
-      if (label.includes("activism")) return "activism";
-      if (label.includes("sterilization")) return "sterilization";
+    function getLabelFromTag(tag) {
+      if (tag === "hyperfertility") return "Hyperfertility & sexual deviance";
+      if (tag === "pain") return "Pain insensitivity";
+      if (tag === "inferiority") return "Biological differences & inferiority";
+      if (tag === "utility") return "Biological utility";
       return null;
     }
 
     function tagMarkers() {
       const markers = document.querySelectorAll(".tl-timemarker");
+
       markers.forEach(marker => {
         marker.classList.remove(
-          "tag-policy",
-          "tag-medical-myth",
-          "tag-activism",
-          "tag-sterilization"
+          "tag-hyperfertility",
+          "tag-pain",
+          "tag-inferiority",
+          "tag-utility"
         );
 
-        const tag = inferTagFromMarker(marker);
-        if (tag) marker.classList.add(`tag-${tag}`);
+        const text = marker.textContent || "";
+        const tag = getTagFromText(text);
+
+        if (tag) {
+          marker.classList.add(`tag-${tag}`);
+        }
       });
     }
 
@@ -149,27 +184,17 @@
 
       const headline = activeSlide.querySelector(".tl-headline");
       if (!headline) return;
-      if (headline.querySelector(".event-pill")) return;
 
-      const text = headline.textContent.toLowerCase();
-      let tag = null;
-      let label = null;
-
-      if (text.includes("policy")) {
-        tag = "policy";
-        label = "Policy";
-      } else if (text.includes("medical myth")) {
-        tag = "medical-myth";
-        label = "Medical Myth";
-      } else if (text.includes("activism")) {
-        tag = "activism";
-        label = "Activism";
-      } else if (text.includes("sterilization")) {
-        tag = "sterilization";
-        label = "Sterilization";
+      const existingPill = headline.querySelector(".event-pill");
+      if (existingPill) {
+        existingPill.remove();
       }
 
-      if (!tag) return;
+      const text = headline.textContent || "";
+      const tag = getTagFromText(text);
+      const label = getLabelFromTag(tag);
+
+      if (!tag || !label) return;
 
       const pill = document.createElement("span");
       pill.className = `event-pill tag-${tag}`;
@@ -177,22 +202,28 @@
       headline.prepend(pill);
     }
 
+    function enhanceTimeline() {
+      tagMarkers();
+      addSlidePill();
+    }
+
     function applyFilter(tag) {
       document.querySelectorAll(".tl-timemarker").forEach(marker => {
         marker.classList.remove("is-dimmed");
+
         if (tag !== "all" && !marker.classList.contains(`tag-${tag}`)) {
           marker.classList.add("is-dimmed");
         }
       });
     }
 
-    function enhanceTimeline() {
-      tagMarkers();
-      addSlidePill();
-    }
+    timeline.on("loaded", () => {
+      enhanceTimeline();
+    });
 
-    timeline.on("loaded", enhanceTimeline);
-    timeline.on("change", enhanceTimeline);
+    timeline.on("change", () => {
+      setTimeout(enhanceTimeline, 100);
+    });
 
     const observer = new MutationObserver(() => {
       enhanceTimeline();
@@ -205,7 +236,8 @@
 
     document.querySelectorAll(".timeline-legend button").forEach(button => {
       button.addEventListener("click", () => {
-        applyFilter(button.dataset.filter);
+        const tag = button.dataset.filter;
+        applyFilter(tag);
       });
     });
   </script>
