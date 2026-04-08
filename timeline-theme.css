@@ -1,0 +1,31 @@
+.tl-slide {
+  background-color: #f8f1e7 !important;
+}
+
+.tl-text {
+  background-color: #fffaf4 !important;
+}
+
+.tl-text-content, 
+.tl-text p {
+  color: #2f2f2f !important;
+}
+
+h2.tl-headline,
+h3.tl-headline {
+  color: #7a1f1f !important;
+}
+
+.tl-timenav {
+  background-color: #e8ddd1 !important;
+}
+
+.tl-timemarker .tl-timemarker-content-container {
+  background-color: #8b5e3c !important;
+  color: white !important;
+}
+
+.tl-timemarker.tl-timemarker-active .tl-timemarker-content-container {
+  background-color: #5c3b23 !important;
+  color: white !important;
+}
