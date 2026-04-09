@@ -138,3 +138,20 @@
   color: #ffffff !important;
   text-shadow: none !important;
 }
+
+/* RESTORE TAGS */
+
+.event-pill {
+  color: white !important;
+  display: inline-block !important;
+  padding: 2px 8px !important;
+  border-radius: 999px !important;
+  font-size: 12px !important;
+  font-weight: 600 !important;
+}
+
+/* your category colors */
+.event-pill.tag-hyperfertility { background: #7c3aed !important; }
+.event-pill.tag-pain { background: #dc2626 !important; }
+.event-pill.tag-inferiority { background: #2563eb !important; }
+.event-pill.tag-utility { background: #16a34a !important; }
