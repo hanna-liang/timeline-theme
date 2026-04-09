@@ -97,3 +97,44 @@
 .tl-slide:not(.tl-title-slide) .tl-headline-date h4 {
   color: #000000 !important;
 }
+
+/* EVEN slides (white) */
+.tl-slide.alt-light {
+  background: #ffffff !important;
+}
+
+.tl-slide.alt-light .tl-text,
+.tl-slide.alt-light .tl-text-content-container,
+.tl-slide.alt-light .tl-slide-content-container {
+  background: #ffffff !important;
+}
+
+.tl-slide.alt-light .tl-headline,
+.tl-slide.alt-light .tl-text-content,
+.tl-slide.alt-light .tl-text p,
+.tl-slide.alt-light .tl-headline-date,
+.tl-slide.alt-light .tl-headline-date h4 {
+  color: #000000 !important;
+  text-shadow: none !important;
+}
+
+
+/* ODD slides (dark) */
+.tl-slide.alt-dark {
+  background: #2f2f2f !important;
+}
+
+.tl-slide.alt-dark .tl-text,
+.tl-slide.alt-dark .tl-text-content-container,
+.tl-slide.alt-dark .tl-slide-content-container {
+  background: #2f2f2f !important;
+}
+
+.tl-slide.alt-dark .tl-headline,
+.tl-slide.alt-dark .tl-text-content,
+.tl-slide.alt-dark .tl-text p,
+.tl-slide.alt-dark .tl-headline-date,
+.tl-slide.alt-dark .tl-headline-date h4 {
+  color: #ffffff !important;
+  text-shadow: none !important;
+}
