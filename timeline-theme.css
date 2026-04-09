@@ -66,17 +66,17 @@
    ========================= */
 
 .tl-timenav {
-  background-color: #e8ddd1 !important;
+  background-color: #E3E3E3 !important;
 }
 
 /* markers */
 .tl-timemarker .tl-timemarker-content-container {
-  background-color: #8b5e3c !important;
+  background-color: #C2C2C2 !important;
   color: #ffffff !important;
 }
 
 .tl-timemarker.tl-timemarker-active .tl-timemarker-content-container {
-  background-color: #5c3b23 !important;
+  background-color: #ffffff !important;
 }
 
 
