@@ -1,31 +1,105 @@
+/* =========================
+   GLOBAL SLIDES
+   ========================= */
+
+/* All slides default (non-title) */
 .tl-slide {
   background-color: #ffffff !important;
 }
 
+/* Text card */
 .tl-text {
-  background-color: #fffaf4 !important;
+  background-color: #ffffff !important;
+  border-radius: 10px !important;
+  padding: 20px !important;
+  box-shadow: 0 4px 20px rgba(0,0,0,0.06) !important;
 }
 
-.tl-text-content, 
-.tl-text p {
+/* Body text */
+.tl-text-content,
+.tl-text p,
+.tl-text-content p {
   color: #000000 !important;
 }
 
+/* Headlines (event titles) */
+.tl-headline,
 h2.tl-headline,
 h3.tl-headline {
-  color: #7a1f1f !important;
+  color: #000000 !important;
 }
+
+/* Dates */
+.tl-headline-date,
+.tl-headline-date h4 {
+  color: #555555 !important;
+}
+
+
+/* =========================
+   TITLE SLIDE (SPECIAL)
+   ========================= */
+
+.tl-title-slide {
+  background-color: #2f2f2f !important;
+}
+
+/* force all containers inside title slide */
+.tl-title-slide .tl-slide-content-container,
+.tl-title-slide .tl-text-content-container,
+.tl-title-slide .tl-text {
+  background-color: #2f2f2f !important;
+  box-shadow: none !important;
+}
+
+/* title slide text */
+.tl-title-slide .tl-text-content,
+.tl-title-slide p,
+.tl-title-slide h2,
+.tl-title-slide h3,
+.tl-title-slide .tl-headline,
+.tl-title-slide .tl-headline-date,
+.tl-title-slide .tl-headline-date h4 {
+  color: #ffffff !important;
+}
+
+
+/* =========================
+   TIMELINE NAV BAR
+   ========================= */
 
 .tl-timenav {
   background-color: #e8ddd1 !important;
 }
 
+/* Marker default */
 .tl-timemarker .tl-timemarker-content-container {
   background-color: #8b5e3c !important;
-  color: white !important;
+  color: #ffffff !important;
 }
 
+/* Active marker */
 .tl-timemarker.tl-timemarker-active .tl-timemarker-content-container {
   background-color: #5c3b23 !important;
-  color: white !important;
+  color: #ffffff !important;
+}
+
+
+/* =========================
+   EXTRA CLEANUP
+   ========================= */
+
+/* Remove weird grey overlays sometimes */
+.tl-slide-content-container {
+  background: transparent !important;
+}
+
+/* Ensure full white background behind cards */
+.tl-slide-background {
+  background-color: #ffffff !important;
+}
+
+/* But NOT for title slide */
+.tl-title-slide .tl-slide-background {
+  background-color: #2f2f2f !important;
 }
