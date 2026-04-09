@@ -111,185 +111,186 @@
 
   <div id="timeline-embed"></div>
 
-  <script src="https://cdn.knightlab.com/libs/timeline3/latest/js/timeline.js"></script>
-  <script>
-    const source = "https://docs.google.com/spreadsheets/d/e/2PACX-1vSrFsEAi3oN7zJZMshHsqHT7jAk0Nt4iM_uL03vN5KmABk79tknJ-NXnBS1V6WulB_lJwg4b2qmi_FC/pubhtml";
+<script src="https://cdn.knightlab.com/libs/timeline3/latest/js/timeline.js"></script>
+<script>
+  const source = "https://docs.google.com/spreadsheets/d/e/2PACX-1vSrFsEAi3oN7zJZMshHsqHT7jAk0Nt4iM_uL03vN5KmABk79tknJ-NXnBS1V6WulB_lJwg4b2qmi_FC/pubhtml";
 
-    const timeline = new TL.Timeline("timeline-embed", source, {
-      initial_zoom: 2
+  const timeline = new TL.Timeline("timeline-embed", source, {
+    initial_zoom: 2
+  });
+
+  let currentFilter = "all";
+
+  function normalizeText(text) {
+    return (text || "").toLowerCase().trim();
+  }
+
+  function getTagsFromText(text) {
+    const t = normalizeText(text);
+    const tags = [];
+
+    if (t.includes("hyperfertility") || t.includes("sexual deviance")) {
+      tags.push("hyperfertility");
+    }
+
+    if (t.includes("pain insensitivity")) {
+      tags.push("pain");
+    }
+
+    if (t.includes("biological differences") || t.includes("inferiority")) {
+      tags.push("inferiority");
+    }
+
+    if (t.includes("biological utility")) {
+      tags.push("utility");
+    }
+
+    return tags;
+  }
+
+  function getTagLabel(tag) {
+    if (tag === "hyperfertility") return "Hyperfertility & sexual deviance";
+    if (tag === "pain") return "Pain insensitivity";
+    if (tag === "inferiority") return "Biological differences & inferiority";
+    if (tag === "utility") return "Biological utility";
+    return null;
+  }
+
+  function classifySlides() {
+    const slides = document.querySelectorAll(".tl-slide");
+
+    slides.forEach((slide) => {
+      slide.classList.remove(
+        "tag-hyperfertility",
+        "tag-pain",
+        "tag-inferiority",
+        "tag-utility",
+        "alt-dark",
+        "alt-light",
+        "is-hidden-by-filter"
+      );
+
+      const tags = getTagsFromText(slide.textContent || "");
+
+      tags.forEach(tag => {
+        slide.classList.add(`tag-${tag}`);
+      });
     });
 
-    let currentFilter = "all";
+    const regularSlides = Array.from(slides).filter(slide => {
+      return !slide.classList.contains("tl-title-slide");
+    });
 
-    function normalizeText(text) {
-      return (text || "").toLowerCase().trim();
-    }
-
-    function getTagsFromText(text) {
-  const t = (text || "").toLowerCase();
-
-  const tags = [];
-
-  if (t.includes("hyperfertility") || t.includes("sexual deviance")) {
-    tags.push("hyperfertility");
-  }
-  if (t.includes("pain insensitivity")) {
-    tags.push("pain");
-  }
-  if (t.includes("biological differences") || t.includes("inferiority")) {
-    tags.push("inferiority");
-  }
-  if (t.includes("biological utility")) {
-    tags.push("utility");
+    regularSlides.forEach((slide, index) => {
+      if (index % 2 === 0) {
+        slide.classList.add("alt-dark");
+      } else {
+        slide.classList.add("alt-light");
+      }
+    });
   }
 
-  return tags;
-}
+  function classifyMarkers() {
+    const markers = document.querySelectorAll(".tl-timemarker");
 
-    function getTagLabel(tag) {
-      if (tag === "hyperfertility") return "Hyperfertility & sexual deviance";
-      if (tag === "pain") return "Pain insensitivity";
-      if (tag === "inferiority") return "Biological differences & inferiority";
-      if (tag === "utility") return "Biological utility";
-      return null;
-    }
+    markers.forEach((marker) => {
+      marker.classList.remove(
+        "tag-hyperfertility",
+        "tag-pain",
+        "tag-inferiority",
+        "tag-utility",
+        "is-hidden-by-filter"
+      );
 
-    function classifySlides() {
-      const slides = document.querySelectorAll(".tl-slide");
+      const tags = getTagsFromText(marker.textContent || "");
 
-      slides.forEach((slide) => {
-        slide.classList.remove(
-          "tag-hyperfertility",
-          "tag-pain",
-          "tag-inferiority",
-          "tag-utility",
-          "alt-dark",
-          "alt-light",
-          "is-hidden-by-filter"
-        );
-
-        const text = slide.textContent || "";
-        const tag = getTagFromText(text);
-
-        if (tag) {
-          slide.classList.add(`tag-${tag}`);
-        }
+      tags.forEach(tag => {
+        marker.classList.add(`tag-${tag}`);
       });
+    });
+  }
 
-      const regularSlides = Array.from(slides).filter(slide => {
-        return !slide.classList.contains("tl-title-slide");
-      });
+  function addSlidePills() {
+    const slides = document.querySelectorAll(".tl-slide");
 
-      regularSlides.forEach((slide, index) => {
-        if (index % 2 === 0) {
-          slide.classList.add("alt-dark");
-        } else {
-          slide.classList.add("alt-light");
-        }
-      });
-    }
+    slides.forEach((slide) => {
+      const headline = slide.querySelector(".tl-headline");
+      if (!headline) return;
+      if (slide.classList.contains("tl-title-slide")) return;
 
-    function classifyMarkers() {
-      const markers = document.querySelectorAll(".tl-timemarker");
+      headline.querySelectorAll(".event-pill").forEach(pill => pill.remove());
 
-      markers.forEach((marker) => {
-        marker.classList.remove(
-          "tag-hyperfertility",
-          "tag-pain",
-          "tag-inferiority",
-          "tag-utility",
-          "is-hidden-by-filter"
-        );
+      const tags = getTagsFromText(slide.textContent || "");
 
-        const text = marker.textContent || "";
-        const tag = getTagFromText(text);
-
-        if (tag) {
-          marker.classList.add(`tag-${tag}`);
-        }
-      });
-    }
-
-    function addSlidePills() {
-      const slides = document.querySelectorAll(".tl-slide");
-
-      slides.forEach((slide) => {
-        const headline = slide.querySelector(".tl-headline");
-        if (!headline) return;
-        if (slide.classList.contains("tl-title-slide")) return;
-
-        const oldPill = headline.querySelector(".event-pill");
-        if (oldPill) oldPill.remove();
-
-        const tag = getTagFromText(slide.textContent || "");
+      tags.forEach(tag => {
         const label = getTagLabel(tag);
-
-        if (!tag || !label) return;
+        if (!label) return;
 
         const pill = document.createElement("span");
         pill.className = `event-pill tag-${tag}`;
         pill.textContent = label;
         headline.prepend(pill);
       });
-    }
+    });
+  }
 
-    function applyFilter(tag) {
-      currentFilter = tag;
+  function applyFilter(tag) {
+    currentFilter = tag;
 
-      document.querySelectorAll(".timeline-filter-btn").forEach(btn => {
-        btn.classList.toggle("is-active", btn.dataset.filter === tag);
-      });
-
-      document.querySelectorAll(".tl-slide").forEach(slide => {
-        slide.classList.remove("is-hidden-by-filter");
-
-        if (slide.classList.contains("tl-title-slide")) {
-          return;
-        }
-
-        if (tag !== "all" && !slide.classList.contains(`tag-${tag}`)) {
-          slide.classList.add("is-hidden-by-filter");
-        }
-      });
-
-      document.querySelectorAll(".tl-timemarker").forEach(marker => {
-        marker.classList.remove("is-hidden-by-filter");
-
-        if (tag !== "all" && !marker.classList.contains(`tag-${tag}`)) {
-          marker.classList.add("is-hidden-by-filter");
-        }
-      });
-    }
-
-    function enhanceTimeline() {
-      classifySlides();
-      classifyMarkers();
-      addSlidePills();
-      applyFilter(currentFilter);
-    }
-
-    timeline.on("loaded", () => {
-      setTimeout(enhanceTimeline, 250);
+    document.querySelectorAll(".timeline-filter-btn").forEach(btn => {
+      btn.classList.toggle("is-active", btn.dataset.filter === tag);
     });
 
-    timeline.on("change", () => {
-      setTimeout(enhanceTimeline, 250);
+    document.querySelectorAll(".tl-slide").forEach(slide => {
+      slide.classList.remove("is-hidden-by-filter");
+
+      if (slide.classList.contains("tl-title-slide")) {
+        return;
+      }
+
+      if (tag !== "all" && !slide.classList.contains(`tag-${tag}`)) {
+        slide.classList.add("is-hidden-by-filter");
+      }
     });
 
-    const observer = new MutationObserver(() => {
-      enhanceTimeline();
-    });
+    document.querySelectorAll(".tl-timemarker").forEach(marker => {
+      marker.classList.remove("is-hidden-by-filter");
 
-    observer.observe(document.body, {
-      childList: true,
-      subtree: true
+      if (tag !== "all" && !marker.classList.contains(`tag-${tag}`)) {
+        marker.classList.add("is-hidden-by-filter");
+      }
     });
+  }
 
-    document.querySelectorAll(".timeline-filter-btn").forEach(button => {
-      button.addEventListener("click", () => {
-        applyFilter(button.dataset.filter);
-      });
+  function enhanceTimeline() {
+    classifySlides();
+    classifyMarkers();
+    addSlidePills();
+    applyFilter(currentFilter);
+  }
+
+  timeline.on("loaded", () => {
+    setTimeout(enhanceTimeline, 250);
+  });
+
+  timeline.on("change", () => {
+    setTimeout(enhanceTimeline, 250);
+  });
+
+  const observer = new MutationObserver(() => {
+    enhanceTimeline();
+  });
+
+  observer.observe(document.body, {
+    childList: true,
+    subtree: true
+  });
+
+  document.querySelectorAll(".timeline-filter-btn").forEach(button => {
+    button.addEventListener("click", () => {
+      applyFilter(button.dataset.filter);
     });
-  </script>
+  });
+</script>
 </body>
 </html>
