@@ -81,10 +81,11 @@
       border-radius: 999px;
       font-size: 12px;
       font-weight: 600;
-      margin-right: 8px;
+      margin-left: 8px;
       line-height: 1.4;
       color: #ffffff !important;
       vertical-align: middle;
+      white-space: nowrap;
     }
 
     .event-pill.tag-hyperfertility { background: #7c3aed; }
@@ -92,13 +93,14 @@
     .event-pill.tag-inferiority { background: #2563eb; }
     .event-pill.tag-utility { background: #16a34a; }
 
-    /* dim instead of removing */
+    /* hide filtered-out markers */
     .tl-timemarker.is-hidden-by-filter {
-      opacity: 0.15 !important;
+      display: none !important;
     }
 
+    /* hide filtered-out slides */
     .tl-slide.is-hidden-by-filter {
-      opacity: 0.2 !important;
+      display: none !important;
     }
   </style>
 </head>
@@ -160,6 +162,12 @@
       return null;
     }
 
+    function getSlideCombinedText(slide) {
+      const groupEl = slide.querySelector(".tl-slide-group");
+      const groupText = groupEl ? groupEl.textContent : "";
+      return groupText + " " + (slide.textContent || "");
+    }
+
     function classifySlides() {
       const slides = document.querySelectorAll(".tl-slide");
 
@@ -174,10 +182,7 @@
           "is-hidden-by-filter"
         );
 
-        const groupEl = slide.querySelector(".tl-slide-group");
-        const groupText = groupEl ? groupEl.textContent : "";
-        const combinedText = groupText + " " + (slide.textContent || "");
-        const tags = getTagsFromText(combinedText);
+        const tags = getTagsFromText(getSlideCombinedText(slide));
 
         tags.forEach(tag => {
           slide.classList.add(`tag-${tag}`);
@@ -227,10 +232,7 @@
 
         headline.querySelectorAll(".event-pill").forEach(pill => pill.remove());
 
-        const groupEl = slide.querySelector(".tl-slide-group");
-        const groupText = groupEl ? groupEl.textContent : "";
-        const combinedText = groupText + " " + (slide.textContent || "");
-        const tags = getTagsFromText(combinedText);
+        const tags = getTagsFromText(getSlideCombinedText(slide));
 
         tags.forEach(tag => {
           const label = getTagLabel(tag);
@@ -239,7 +241,7 @@
           const pill = document.createElement("span");
           pill.className = `event-pill tag-${tag}`;
           pill.textContent = label;
-          headline.prepend(pill);
+          headline.appendChild(pill);
         });
       });
     }
@@ -255,6 +257,9 @@
         slide.classList.remove("is-hidden-by-filter");
 
         if (slide.classList.contains("tl-title-slide")) {
+          if (tag !== "all") {
+            slide.classList.add("is-hidden-by-filter");
+          }
           return;
         }
 
