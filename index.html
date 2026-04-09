@@ -12,15 +12,102 @@
       margin: 0;
       padding: 0;
       background: #ffffff;
+      font-family: Arial, sans-serif;
+    }
+
+    .timeline-filter-bar {
+      position: sticky;
+      top: 0;
+      z-index: 9999;
+      display: flex;
+      gap: 10px;
+      flex-wrap: wrap;
+      align-items: center;
+      padding: 14px 16px;
+      background: #f5f5f5;
+      border-bottom: 1px solid #e5e5e5;
+    }
+
+    .timeline-filter-label {
+      font-size: 14px;
+      font-weight: 600;
+      color: #222222;
+      margin-right: 4px;
+    }
+
+    .timeline-filter-btn {
+      border: none;
+      border-radius: 999px;
+      padding: 8px 12px;
+      font-size: 13px;
+      font-weight: 600;
+      cursor: pointer;
+      color: white;
+    }
+
+    .timeline-filter-btn[data-filter="all"] {
+      background: #444444;
+    }
+
+    .timeline-filter-btn[data-filter="hyperfertility"] {
+      background: #7c3aed;
+    }
+
+    .timeline-filter-btn[data-filter="pain"] {
+      background: #dc2626;
+    }
+
+    .timeline-filter-btn[data-filter="inferiority"] {
+      background: #2563eb;
+    }
+
+    .timeline-filter-btn[data-filter="utility"] {
+      background: #16a34a;
+    }
+
+    .timeline-filter-btn.is-active {
+      outline: 2px solid #111111;
+      outline-offset: 2px;
     }
 
     #timeline-embed {
       width: 100%;
       height: 650px;
     }
+
+    .event-pill {
+      display: inline-block;
+      padding: 3px 9px;
+      border-radius: 999px;
+      font-size: 12px;
+      font-weight: 600;
+      margin-right: 8px;
+      line-height: 1.4;
+      color: #ffffff !important;
+      vertical-align: middle;
+    }
+
+    .event-pill.tag-hyperfertility { background: #7c3aed; }
+    .event-pill.tag-pain { background: #dc2626; }
+    .event-pill.tag-inferiority { background: #2563eb; }
+    .event-pill.tag-utility { background: #16a34a; }
+
+    .tl-timemarker.is-hidden-by-filter,
+    .tl-slide.is-hidden-by-filter {
+      display: none !important;
+    }
   </style>
 </head>
 <body>
+
+  <div class="timeline-filter-bar">
+    <span class="timeline-filter-label">Filter by tag:</span>
+    <button class="timeline-filter-btn is-active" data-filter="all">All</button>
+    <button class="timeline-filter-btn" data-filter="hyperfertility">Hyperfertility & sexual deviance</button>
+    <button class="timeline-filter-btn" data-filter="pain">Pain insensitivity</button>
+    <button class="timeline-filter-btn" data-filter="inferiority">Biological differences & inferiority</button>
+    <button class="timeline-filter-btn" data-filter="utility">Biological utility</button>
+  </div>
 
   <div id="timeline-embed"></div>
 
@@ -32,8 +119,14 @@
       initial_zoom: 2
     });
 
+    let currentFilter = "all";
+
+    function normalizeText(text) {
+      return (text || "").toLowerCase().trim();
+    }
+
     function getTagFromText(text) {
-      const t = (text || "").toLowerCase();
+      const t = normalizeText(text);
 
       if (t.includes("hyperfertility") || t.includes("sexual deviance")) {
         return "hyperfertility";
@@ -51,7 +144,7 @@
       return null;
     }
 
-    function getLabelFromTag(tag) {
+    function getTagLabel(tag) {
       if (tag === "hyperfertility") return "Hyperfertility & sexual deviance";
       if (tag === "pain") return "Pain insensitivity";
       if (tag === "inferiority") return "Biological differences & inferiority";
@@ -59,52 +152,75 @@
       return null;
     }
 
-    function applySlideStyles() {
+    function classifySlides() {
       const slides = document.querySelectorAll(".tl-slide");
 
-      slides.forEach((slide, index) => {
-        slide.classList.remove("is-title-slide", "is-regular-slide");
+      slides.forEach((slide) => {
+        slide.classList.remove(
+          "tag-hyperfertility",
+          "tag-pain",
+          "tag-inferiority",
+          "tag-utility",
+          "alt-dark",
+          "alt-light",
+          "is-hidden-by-filter"
+        );
 
-        if (index === 0) {
-          slide.classList.add("is-title-slide");
+        const text = slide.textContent || "";
+        const tag = getTagFromText(text);
+
+        if (tag) {
+          slide.classList.add(`tag-${tag}`);
+        }
+      });
+
+      const regularSlides = Array.from(slides).filter(slide => {
+        return !slide.classList.contains("tl-title-slide");
+      });
+
+      regularSlides.forEach((slide, index) => {
+        if (index % 2 === 0) {
+          slide.classList.add("alt-dark");
         } else {
-          slide.classList.add("is-regular-slide");
+          slide.classList.add("alt-light");
         }
       });
     }
 
-    function applyMarkerTags() {
+    function classifyMarkers() {
       const markers = document.querySelectorAll(".tl-timemarker");
 
-      markers.forEach(marker => {
+      markers.forEach((marker) => {
         marker.classList.remove(
           "tag-hyperfertility",
           "tag-pain",
           "tag-inferiority",
-          "tag-utility"
+          "tag-utility",
+          "is-hidden-by-filter"
         );
 
-        const tag = getTagFromText(marker.textContent || "");
+        const text = marker.textContent || "";
+        const tag = getTagFromText(text);
+
         if (tag) {
           marker.classList.add(`tag-${tag}`);
         }
       });
     }
 
-    function applySlidePills() {
+    function addSlidePills() {
       const slides = document.querySelectorAll(".tl-slide");
 
-      slides.forEach((slide, index) => {
-        if (index === 0) return; // no pill on title slide
-
+      slides.forEach((slide) => {
         const headline = slide.querySelector(".tl-headline");
         if (!headline) return;
+        if (slide.classList.contains("tl-title-slide")) return;
 
         const oldPill = headline.querySelector(".event-pill");
         if (oldPill) oldPill.remove();
 
-        const tag = getTagFromText(headline.textContent || "");
-        const label = getLabelFromTag(tag);
+        const tag = getTagFromText(slide.textContent || "");
+        const label = getTagLabel(tag);
 
         if (!tag || !label) return;
 
@@ -115,18 +231,47 @@
       });
     }
 
+    function applyFilter(tag) {
+      currentFilter = tag;
+
+      document.querySelectorAll(".timeline-filter-btn").forEach(btn => {
+        btn.classList.toggle("is-active", btn.dataset.filter === tag);
+      });
+
+      document.querySelectorAll(".tl-slide").forEach(slide => {
+        slide.classList.remove("is-hidden-by-filter");
+
+        if (slide.classList.contains("tl-title-slide")) {
+          return;
+        }
+
+        if (tag !== "all" && !slide.classList.contains(`tag-${tag}`)) {
+          slide.classList.add("is-hidden-by-filter");
+        }
+      });
+
+      document.querySelectorAll(".tl-timemarker").forEach(marker => {
+        marker.classList.remove("is-hidden-by-filter");
+
+        if (tag !== "all" && !marker.classList.contains(`tag-${tag}`)) {
+          marker.classList.add("is-hidden-by-filter");
+        }
+      });
+    }
+
     function enhanceTimeline() {
-      applySlideStyles();
-      applyMarkerTags();
-      applySlidePills();
+      classifySlides();
+      classifyMarkers();
+      addSlidePills();
+      applyFilter(currentFilter);
     }
 
     timeline.on("loaded", () => {
-      setTimeout(enhanceTimeline, 200);
+      setTimeout(enhanceTimeline, 250);
     });
 
     timeline.on("change", () => {
-      setTimeout(enhanceTimeline, 200);
+      setTimeout(enhanceTimeline, 250);
     });
 
     const observer = new MutationObserver(() => {
@@ -136,6 +281,12 @@
     observer.observe(document.body, {
       childList: true,
       subtree: true
+    });
+
+    document.querySelectorAll(".timeline-filter-btn").forEach(button => {
+      button.addEventListener("click", () => {
+        applyFilter(button.dataset.filter);
+      });
     });
   </script>
 </body>
