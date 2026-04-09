@@ -1,5 +1,5 @@
 /* =========================
-   BASE LAYOUT
+   BASE RESET
    ========================= */
 
 .tl-slide,
@@ -11,138 +11,116 @@
 
 /* =========================
    TITLE SLIDE
-   first slide only
    ========================= */
 
-.tl-slide.is-title-slide {
+.tl-title-slide {
   background: #2f2f2f !important;
 }
 
-.tl-slide.is-title-slide .tl-text,
-.tl-slide.is-title-slide .tl-text-content-container,
-.tl-slide.is-title-slide .tl-slide-content-container,
-.tl-slide.is-title-slide .tl-slide-background {
+.tl-title-slide .tl-slide-background,
+.tl-title-slide .tl-slide-content-container,
+.tl-title-slide .tl-text-content-container,
+.tl-title-slide .tl-text {
   background: #2f2f2f !important;
   box-shadow: none !important;
 }
 
-.tl-slide.is-title-slide .tl-headline,
-.tl-slide.is-title-slide .tl-text-content,
-.tl-slide.is-title-slide .tl-text p,
-.tl-slide.is-title-slide .tl-headline-date,
-.tl-slide.is-title-slide .tl-headline-date h4 {
+.tl-title-slide .tl-headline,
+.tl-title-slide .tl-text-content,
+.tl-title-slide .tl-text p,
+.tl-title-slide .tl-headline-date,
+.tl-title-slide .tl-headline-date h4 {
   color: #ffffff !important;
   text-shadow: none !important;
 }
 
 /* =========================
-   ALL OTHER SLIDES
+   ALTERNATING EVENT SLIDES
    ========================= */
 
-.tl-slide.is-regular-slide {
+.tl-slide.alt-dark {
+  background: #2f2f2f !important;
+}
+
+.tl-slide.alt-dark .tl-slide-background,
+.tl-slide.alt-dark .tl-slide-content-container,
+.tl-slide.alt-dark .tl-text-content-container,
+.tl-slide.alt-dark .tl-text {
+  background: #2f2f2f !important;
+  box-shadow: none !important;
+}
+
+.tl-slide.alt-dark .tl-headline,
+.tl-slide.alt-dark .tl-text-content,
+.tl-slide.alt-dark .tl-text p,
+.tl-slide.alt-dark .tl-headline-date,
+.tl-slide.alt-dark .tl-headline-date h4 {
+  color: #ffffff !important;
+  text-shadow: none !important;
+}
+
+.tl-slide.alt-light {
   background: #ffffff !important;
 }
 
-.tl-slide.is-regular-slide .tl-text,
-.tl-slide.is-regular-slide .tl-text-content-container,
-.tl-slide.is-regular-slide .tl-slide-content-container,
-.tl-slide.is-regular-slide .tl-slide-background {
+.tl-slide.alt-light .tl-slide-background,
+.tl-slide.alt-light .tl-slide-content-container,
+.tl-slide.alt-light .tl-text-content-container,
+.tl-slide.alt-light .tl-text {
   background: #ffffff !important;
   box-shadow: none !important;
 }
 
-.tl-slide.is-regular-slide .tl-headline,
-.tl-slide.is-regular-slide .tl-text-content,
-.tl-slide.is-regular-slide .tl-text p,
-.tl-slide.is-regular-slide .tl-headline-date,
-.tl-slide.is-regular-slide .tl-headline-date h4 {
+.tl-slide.alt-light .tl-headline,
+.tl-slide.alt-light .tl-text-content,
+.tl-slide.alt-light .tl-text p,
+.tl-slide.alt-light .tl-headline-date,
+.tl-slide.alt-light .tl-headline-date h4 {
   color: #000000 !important;
   text-shadow: none !important;
 }
 
 /* =========================
-   TAG PILLS
+   NAV BAR + MARKERS
    ========================= */
 
-.event-pill {
-  display: inline-block !important;
-  padding: 3px 9px !important;
-  border-radius: 999px !important;
-  font-size: 12px !important;
-  font-weight: 600 !important;
-  margin-right: 8px !important;
-  line-height: 1.4 !important;
-  color: #ffffff !important;
-  vertical-align: middle !important;
+.tl-timenav {
+  background: #f2f2f2 !important;
 }
+
+.tl-timemarker .tl-timemarker-content-container {
+  background: #444444 !important;
+  color: #ffffff !important;
+  border: none !important;
+}
+
+.tl-timemarker.tl-timemarker-active .tl-timemarker-content-container {
+  background: #ffffff !important;
+  color: #111111 !important;
+  border: 1px solid #cccccc !important;
+}
+
+/* =========================
+   CATEGORY COLORS
+   these color the pills only
+   ========================= */
 
 .event-pill.tag-hyperfertility {
   background: #7c3aed !important;
+  color: #ffffff !important;
 }
 
 .event-pill.tag-pain {
   background: #dc2626 !important;
+  color: #ffffff !important;
 }
 
 .event-pill.tag-inferiority {
   background: #2563eb !important;
+  color: #ffffff !important;
 }
 
 .event-pill.tag-utility {
   background: #16a34a !important;
-}
-
-/* =========================
-   TIMELINE NAV BAR
-   ========================= */
-
-.tl-timenav {
-  background-color: #e8ddd1 !important;
-}
-
-/* default marker look if no tag is detected */
-.tl-timemarker .tl-timemarker-content-container {
   color: #ffffff !important;
-}
-
-/* active markers keep white text */
-.tl-timemarker.tl-timemarker-active .tl-timemarker-content-container {
-  color: #ffffff !important;
-}
-
-/* =========================
-   MARKER COLORS BY TAG
-   ========================= */
-
-.tl-timemarker.tag-hyperfertility .tl-timemarker-content-container {
-  background-color: #7c3aed !important;
-}
-
-.tl-timemarker.tag-pain .tl-timemarker-content-container {
-  background-color: #dc2626 !important;
-}
-
-.tl-timemarker.tag-inferiority .tl-timemarker-content-container {
-  background-color: #2563eb !important;
-}
-
-.tl-timemarker.tag-utility .tl-timemarker-content-container {
-  background-color: #16a34a !important;
-}
-
-/* darker active state */
-.tl-timemarker.tag-hyperfertility.tl-timemarker-active .tl-timemarker-content-container {
-  background-color: #5b21b6 !important;
-}
-
-.tl-timemarker.tag-pain.tl-timemarker-active .tl-timemarker-content-container {
-  background-color: #991b1b !important;
-}
-
-.tl-timemarker.tag-inferiority.tl-timemarker-active .tl-timemarker-content-container {
-  background-color: #1d4ed8 !important;
-}
-
-.tl-timemarker.tag-utility.tl-timemarker-active .tl-timemarker-content-container {
-  background-color: #166534 !important;
 }
