@@ -1,157 +1,148 @@
 /* =========================
-   RESET EVERYTHING FIRST
+   BASE LAYOUT
    ========================= */
 
-/* default all slides */
-.tl-slide {
-  background: #ffffff !important;
-}
-
-/* remove weird overlays */
-.tl-slide-background {
-  background: #ffffff !important;
-}
-
-/* text card */
-.tl-text,
-.tl-text-content-container,
-.tl-slide-content-container {
-  background: #ffffff !important;
-  box-shadow: none !important;
-}
-
-/* text */
-.tl-headline,
-.tl-text-content,
-.tl-text p,
-.tl-headline-date,
-.tl-headline-date h4 {
-  color: #000000 !important;
+.tl-slide,
+.tl-slide-background,
+.tl-slide-content-container,
+.tl-text-content-container {
   text-shadow: none !important;
 }
 
-
 /* =========================
-   TITLE SLIDE (FORCED)
+   TITLE SLIDE
+   first slide only
    ========================= */
 
-/* target title slide wrapper */
-.tl-title-slide {
+.tl-slide.is-title-slide {
   background: #2f2f2f !important;
 }
 
-/* force ALL inner layers dark */
-.tl-title-slide .tl-slide,
-.tl-title-slide .tl-slide-background,
-.tl-title-slide .tl-text,
-.tl-title-slide .tl-text-content-container,
-.tl-title-slide .tl-slide-content-container {
+.tl-slide.is-title-slide .tl-text,
+.tl-slide.is-title-slide .tl-text-content-container,
+.tl-slide.is-title-slide .tl-slide-content-container,
+.tl-slide.is-title-slide .tl-slide-background {
   background: #2f2f2f !important;
   box-shadow: none !important;
 }
 
-/* title slide text = white */
-.tl-title-slide .tl-headline,
-.tl-title-slide .tl-text-content,
-.tl-title-slide .tl-text p,
-.tl-title-slide .tl-headline-date,
-.tl-title-slide .tl-headline-date h4 {
+.tl-slide.is-title-slide .tl-headline,
+.tl-slide.is-title-slide .tl-text-content,
+.tl-slide.is-title-slide .tl-text p,
+.tl-slide.is-title-slide .tl-headline-date,
+.tl-slide.is-title-slide .tl-headline-date h4 {
   color: #ffffff !important;
   text-shadow: none !important;
 }
 
-
 /* =========================
-   TIMELINE BAR
+   ALL OTHER SLIDES
    ========================= */
 
-.tl-timenav {
-  background-color: #E3E3E3 !important;
-}
-
-/* markers */
-.tl-timemarker .tl-timemarker-content-container {
-  background-color: #C2C2C2 !important;
-  color: #ffffff !important;
-}
-
-.tl-timemarker.tl-timemarker-active .tl-timemarker-content-container {
-  background-color: #ffffff !important;
-}
-
-
-/* =========================
-   FIX RANDOM WHITE TEXT BUG
-   ========================= */
-
-/* sometimes TimelineJS forces white text → kill it */
-.tl-slide * {
-  text-shadow: none !important;
-}
-
-/* ensure ALL non-title slides stay black */
-.tl-slide:not(.tl-title-slide) .tl-headline,
-.tl-slide:not(.tl-title-slide) .tl-text-content,
-.tl-slide:not(.tl-title-slide) .tl-text p,
-.tl-slide:not(.tl-title-slide) .tl-headline-date,
-.tl-slide:not(.tl-title-slide) .tl-headline-date h4 {
-  color: #000000 !important;
-}
-
-/* EVEN slides (white) */
-.tl-slide.alt-light {
+.tl-slide.is-regular-slide {
   background: #ffffff !important;
 }
 
-.tl-slide.alt-light .tl-text,
-.tl-slide.alt-light .tl-text-content-container,
-.tl-slide.alt-light .tl-slide-content-container {
+.tl-slide.is-regular-slide .tl-text,
+.tl-slide.is-regular-slide .tl-text-content-container,
+.tl-slide.is-regular-slide .tl-slide-content-container,
+.tl-slide.is-regular-slide .tl-slide-background {
   background: #ffffff !important;
+  box-shadow: none !important;
 }
 
-.tl-slide.alt-light .tl-headline,
-.tl-slide.alt-light .tl-text-content,
-.tl-slide.alt-light .tl-text p,
-.tl-slide.alt-light .tl-headline-date,
-.tl-slide.alt-light .tl-headline-date h4 {
+.tl-slide.is-regular-slide .tl-headline,
+.tl-slide.is-regular-slide .tl-text-content,
+.tl-slide.is-regular-slide .tl-text p,
+.tl-slide.is-regular-slide .tl-headline-date,
+.tl-slide.is-regular-slide .tl-headline-date h4 {
   color: #000000 !important;
   text-shadow: none !important;
 }
 
-
-/* ODD slides (dark) */
-.tl-slide.alt-dark {
-  background: #2f2f2f !important;
-}
-
-.tl-slide.alt-dark .tl-text,
-.tl-slide.alt-dark .tl-text-content-container,
-.tl-slide.alt-dark .tl-slide-content-container {
-  background: #2f2f2f !important;
-}
-
-.tl-slide.alt-dark .tl-headline,
-.tl-slide.alt-dark .tl-text-content,
-.tl-slide.alt-dark .tl-text p,
-.tl-slide.alt-dark .tl-headline-date,
-.tl-slide.alt-dark .tl-headline-date h4 {
-  color: #ffffff !important;
-  text-shadow: none !important;
-}
-
-/* RESTORE TAGS */
+/* =========================
+   TAG PILLS
+   ========================= */
 
 .event-pill {
-  color: white !important;
   display: inline-block !important;
-  padding: 2px 8px !important;
+  padding: 3px 9px !important;
   border-radius: 999px !important;
   font-size: 12px !important;
   font-weight: 600 !important;
+  margin-right: 8px !important;
+  line-height: 1.4 !important;
+  color: #ffffff !important;
+  vertical-align: middle !important;
 }
 
-/* your category colors */
-.event-pill.tag-hyperfertility { background: #7c3aed !important; }
-.event-pill.tag-pain { background: #dc2626 !important; }
-.event-pill.tag-inferiority { background: #2563eb !important; }
-.event-pill.tag-utility { background: #16a34a !important; }
+.event-pill.tag-hyperfertility {
+  background: #7c3aed !important;
+}
+
+.event-pill.tag-pain {
+  background: #dc2626 !important;
+}
+
+.event-pill.tag-inferiority {
+  background: #2563eb !important;
+}
+
+.event-pill.tag-utility {
+  background: #16a34a !important;
+}
+
+/* =========================
+   TIMELINE NAV BAR
+   ========================= */
+
+.tl-timenav {
+  background-color: #e8ddd1 !important;
+}
+
+/* default marker look if no tag is detected */
+.tl-timemarker .tl-timemarker-content-container {
+  color: #ffffff !important;
+}
+
+/* active markers keep white text */
+.tl-timemarker.tl-timemarker-active .tl-timemarker-content-container {
+  color: #ffffff !important;
+}
+
+/* =========================
+   MARKER COLORS BY TAG
+   ========================= */
+
+.tl-timemarker.tag-hyperfertility .tl-timemarker-content-container {
+  background-color: #7c3aed !important;
+}
+
+.tl-timemarker.tag-pain .tl-timemarker-content-container {
+  background-color: #dc2626 !important;
+}
+
+.tl-timemarker.tag-inferiority .tl-timemarker-content-container {
+  background-color: #2563eb !important;
+}
+
+.tl-timemarker.tag-utility .tl-timemarker-content-container {
+  background-color: #16a34a !important;
+}
+
+/* darker active state */
+.tl-timemarker.tag-hyperfertility.tl-timemarker-active .tl-timemarker-content-container {
+  background-color: #5b21b6 !important;
+}
+
+.tl-timemarker.tag-pain.tl-timemarker-active .tl-timemarker-content-container {
+  background-color: #991b1b !important;
+}
+
+.tl-timemarker.tag-inferiority.tl-timemarker-active .tl-timemarker-content-container {
+  background-color: #1d4ed8 !important;
+}
+
+.tl-timemarker.tag-utility.tl-timemarker-active .tl-timemarker-content-container {
+  background-color: #166534 !important;
+}
