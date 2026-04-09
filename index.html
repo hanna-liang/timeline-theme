@@ -125,24 +125,26 @@
       return (text || "").toLowerCase().trim();
     }
 
-    function getTagFromText(text) {
-      const t = normalizeText(text);
+    function getTagsFromText(text) {
+  const t = (text || "").toLowerCase();
 
-      if (t.includes("hyperfertility") || t.includes("sexual deviance")) {
-        return "hyperfertility";
-      }
-      if (t.includes("pain insensitivity")) {
-        return "pain";
-      }
-      if (t.includes("biological differences") || t.includes("inferiority")) {
-        return "inferiority";
-      }
-      if (t.includes("biological utility")) {
-        return "utility";
-      }
+  const tags = [];
 
-      return null;
-    }
+  if (t.includes("hyperfertility") || t.includes("sexual deviance")) {
+    tags.push("hyperfertility");
+  }
+  if (t.includes("pain insensitivity")) {
+    tags.push("pain");
+  }
+  if (t.includes("biological differences") || t.includes("inferiority")) {
+    tags.push("inferiority");
+  }
+  if (t.includes("biological utility")) {
+    tags.push("utility");
+  }
+
+  return tags;
+}
 
     function getTagLabel(tag) {
       if (tag === "hyperfertility") return "Hyperfertility & sexual deviance";
