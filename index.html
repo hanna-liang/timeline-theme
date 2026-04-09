@@ -4,10 +4,7 @@
   <meta charset="utf-8">
   <title>Timeline</title>
 
-  <!-- TimelineJS CSS -->
   <link rel="stylesheet" href="https://cdn.knightlab.com/libs/timeline3/latest/css/timeline.css">
-
-  <!-- YOUR custom CSS -->
   <link rel="stylesheet" href="timeline-theme.css">
 
   <style>
@@ -21,61 +18,13 @@
       width: 100%;
       height: 650px;
     }
-
-    /* =========================
-       ALTERNATING SLIDES
-       ========================= */
-
-    /* DARK */
-    .tl-slide.alt-dark {
-      background: #2f2f2f !important;
-    }
-
-    .tl-slide.alt-dark .tl-text,
-    .tl-slide.alt-dark .tl-text-content-container,
-    .tl-slide.alt-dark .tl-slide-content-container {
-      background: #2f2f2f !important;
-      box-shadow: none !important;
-    }
-
-    .tl-slide.alt-dark .tl-headline,
-    .tl-slide.alt-dark .tl-text-content,
-    .tl-slide.alt-dark .tl-text p,
-    .tl-slide.alt-dark .tl-headline-date,
-    .tl-slide.alt-dark .tl-headline-date h4 {
-      color: #ffffff !important;
-      text-shadow: none !important;
-    }
-
-    /* LIGHT */
-    .tl-slide.alt-light {
-      background: #ffffff !important;
-    }
-
-    .tl-slide.alt-light .tl-text,
-    .tl-slide.alt-light .tl-text-content-container,
-    .tl-slide.alt-light .tl-slide-content-container {
-      background: #ffffff !important;
-    }
-
-    .tl-slide.alt-light .tl-headline,
-    .tl-slide.alt-light .tl-text-content,
-    .tl-slide.alt-light .tl-text p,
-    .tl-slide.alt-light .tl-headline-date,
-    .tl-slide.alt-light .tl-headline-date h4 {
-      color: #000000 !important;
-      text-shadow: none !important;
-    }
   </style>
 </head>
-
 <body>
 
   <div id="timeline-embed"></div>
 
-  <!-- TimelineJS script -->
   <script src="https://cdn.knightlab.com/libs/timeline3/latest/js/timeline.js"></script>
-
   <script>
     const source = "https://docs.google.com/spreadsheets/d/e/2PACX-1vSrFsEAi3oN7zJZMshHsqHT7jAk0Nt4iM_uL03vN5KmABk79tknJ-NXnBS1V6WulB_lJwg4b2qmi_FC/pubhtml";
 
@@ -83,37 +32,105 @@
       initial_zoom: 2
     });
 
-    /* =========================
-       ALTERNATING LOGIC
-       ========================= */
+    function getTagFromText(text) {
+      const t = (text || "").toLowerCase();
 
-    function alternateSlides() {
+      if (t.includes("hyperfertility") || t.includes("sexual deviance")) {
+        return "hyperfertility";
+      }
+      if (t.includes("pain insensitivity")) {
+        return "pain";
+      }
+      if (t.includes("biological differences") || t.includes("inferiority")) {
+        return "inferiority";
+      }
+      if (t.includes("biological utility")) {
+        return "utility";
+      }
+
+      return null;
+    }
+
+    function getLabelFromTag(tag) {
+      if (tag === "hyperfertility") return "Hyperfertility & sexual deviance";
+      if (tag === "pain") return "Pain insensitivity";
+      if (tag === "inferiority") return "Biological differences & inferiority";
+      if (tag === "utility") return "Biological utility";
+      return null;
+    }
+
+    function applySlideStyles() {
       const slides = document.querySelectorAll(".tl-slide");
 
       slides.forEach((slide, index) => {
-        slide.classList.remove("alt-dark", "alt-light");
+        slide.classList.remove("is-title-slide", "is-regular-slide");
 
-        if (index % 2 === 0) {
-          slide.classList.add("alt-dark");   // first = dark
+        if (index === 0) {
+          slide.classList.add("is-title-slide");
         } else {
-          slide.classList.add("alt-light");  // next = light
+          slide.classList.add("is-regular-slide");
         }
       });
     }
 
-    /* run when timeline loads */
+    function applyMarkerTags() {
+      const markers = document.querySelectorAll(".tl-timemarker");
+
+      markers.forEach(marker => {
+        marker.classList.remove(
+          "tag-hyperfertility",
+          "tag-pain",
+          "tag-inferiority",
+          "tag-utility"
+        );
+
+        const tag = getTagFromText(marker.textContent || "");
+        if (tag) {
+          marker.classList.add(`tag-${tag}`);
+        }
+      });
+    }
+
+    function applySlidePills() {
+      const slides = document.querySelectorAll(".tl-slide");
+
+      slides.forEach((slide, index) => {
+        if (index === 0) return; // no pill on title slide
+
+        const headline = slide.querySelector(".tl-headline");
+        if (!headline) return;
+
+        const oldPill = headline.querySelector(".event-pill");
+        if (oldPill) oldPill.remove();
+
+        const tag = getTagFromText(headline.textContent || "");
+        const label = getLabelFromTag(tag);
+
+        if (!tag || !label) return;
+
+        const pill = document.createElement("span");
+        pill.className = `event-pill tag-${tag}`;
+        pill.textContent = label;
+        headline.prepend(pill);
+      });
+    }
+
+    function enhanceTimeline() {
+      applySlideStyles();
+      applyMarkerTags();
+      applySlidePills();
+    }
+
     timeline.on("loaded", () => {
-      alternateSlides();
+      setTimeout(enhanceTimeline, 200);
     });
 
-    /* run when navigating */
     timeline.on("change", () => {
-      setTimeout(alternateSlides, 100);
+      setTimeout(enhanceTimeline, 200);
     });
 
-    /* backup observer (TimelineJS rerenders a lot) */
     const observer = new MutationObserver(() => {
-      alternateSlides();
+      enhanceTimeline();
     });
 
     observer.observe(document.body, {
@@ -121,6 +138,5 @@
       subtree: true
     });
   </script>
-
 </body>
 </html>
