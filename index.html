@@ -277,15 +277,6 @@
     setTimeout(enhanceTimeline, 250);
   });
 
-  const observer = new MutationObserver(() => {
-    enhanceTimeline();
-  });
-
-  observer.observe(document.body, {
-    childList: true,
-    subtree: true
-  });
-
   document.querySelectorAll(".timeline-filter-btn").forEach(button => {
     button.addEventListener("click", () => {
       applyFilter(button.dataset.filter);
