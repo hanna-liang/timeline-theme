@@ -1,122 +1,369 @@
-<!doctype html>
+<!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="utf-8">
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>Timeline</title>
 
-  <link rel="stylesheet" href="https://cdn.knightlab.com/libs/timeline3/latest/css/timeline.css">
-  <link rel="stylesheet" href="timeline-theme.css">
+  <!-- TimelineJS v3 -->
+  <link rel="stylesheet" href="https://cdn.knightlab.com/libs/timeline3/latest/css/timeline.css" />
+  <script src="https://cdn.knightlab.com/libs/timeline3/latest/js/timeline.js"></script>
 
   <style>
-    html, body {
-      margin: 0;
-      padding: 0;
-      background: #ffffff;
-      font-family: Arial, sans-serif;
-    }
+    * { box-sizing: border-box; margin: 0; padding: 0; }
 
-    .timeline-filter-bar {
-      position: sticky;
-      top: 0;
-      z-index: 9999;
-      display: flex;
-      gap: 10px;
-      flex-wrap: wrap;
-      align-items: center;
-      padding: 14px 16px;
+    body {
+      font-family: "Helvetica Neue", Helvetica, Arial, sans-serif;
       background: #f5f5f5;
-      border-bottom: 1px solid #e5e5e5;
     }
 
-    .timeline-filter-label {
-      font-size: 14px;
-      font-weight: 600;
-      color: #222222;
-      margin-right: 4px;
+    /* ── Tag filter bar ── */
+    #filter-bar {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+      align-items: center;
+      padding: 14px 20px;
+      background: #1a1a2e;
+      border-bottom: 3px solid #e8c840;
     }
 
-    .timeline-filter-btn {
-      border: none;
-      border-radius: 999px;
-      padding: 8px 12px;
+    #filter-bar label {
+      color: #ccc;
       font-size: 13px;
       font-weight: 600;
-      cursor: pointer;
-      color: white;
-      opacity: 0.55;
-      transition: opacity 0.15s;
-    }
-
-    .timeline-filter-btn[data-filter="all"]            { background: #444444; }
-    .timeline-filter-btn[data-filter="hyperfertility"] { background: #7c3aed; }
-    .timeline-filter-btn[data-filter="pain"]           { background: #dc2626; }
-    .timeline-filter-btn[data-filter="inferiority"]    { background: #2563eb; }
-    .timeline-filter-btn[data-filter="utility"]        { background: #16a34a; }
-
-    .timeline-filter-btn.is-active {
-      opacity: 1;
-      outline: 2px solid #111111;
-      outline-offset: 2px;
-    }
-
-    #timeline-embed {
-      width: 100%;
-      height: 650px;
-    }
-
-    #timeline-loading {
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      height: 650px;
-      font-size: 15px;
-      color: #888;
-    }
-
-    .event-pill {
-      display: inline-block;
-      padding: 3px 9px;
-      border-radius: 999px;
-      font-size: 12px;
-      font-weight: 600;
-      margin-left: 8px;
-      line-height: 1.4;
-      color: #ffffff !important;
-      vertical-align: middle;
+      letter-spacing: 0.05em;
+      text-transform: uppercase;
+      margin-right: 4px;
       white-space: nowrap;
     }
 
-    .event-pill.tag-hyperfertility { background: #7c3aed; }
-    .event-pill.tag-pain           { background: #dc2626; }
-    .event-pill.tag-inferiority    { background: #2563eb; }
-    .event-pill.tag-utility        { background: #16a34a; }
+    .tag-btn {
+      padding: 6px 14px;
+      border-radius: 20px;
+      border: 2px solid transparent;
+      cursor: pointer;
+      font-size: 13px;
+      font-weight: 600;
+      transition: all 0.18s ease;
+      white-space: nowrap;
+    }
+
+    .tag-btn:hover { filter: brightness(1.15); }
+
+    /* "All" button */
+    .tag-btn.all {
+      background: #e8c840;
+      color: #1a1a2e;
+      border-color: #e8c840;
+    }
+    .tag-btn.all.inactive {
+      background: transparent;
+      color: #e8c840;
+      border-color: #e8c840;
+    }
+
+    /* Individual tag colors */
+    .tag-btn[data-tag="hyperfertility"]  { --c: #c94b4b; }
+    .tag-btn[data-tag="pain"]            { --c: #4b7fc9; }
+    .tag-btn[data-tag="biological-diff"] { --c: #7ac94b; }
+    .tag-btn[data-tag="biological-util"] { --c: #c97a4b; }
+    /* Add more: .tag-btn[data-tag="your-key"] { --c: #hexcolor; } */
+
+    .tag-btn.active {
+      background: var(--c);
+      color: #fff;
+      border-color: var(--c);
+    }
+    .tag-btn.inactive {
+      background: transparent;
+      color: var(--c);
+      border-color: var(--c);
+    }
+
+    /* ── Timeline container ── */
+    #timeline-embed {
+      width: 100%;
+      height: calc(100vh - 60px);
+    }
+
+    /* ── No-results message ── */
+    #no-results {
+      display: none;
+      text-align: center;
+      padding: 60px 20px;
+      color: #666;
+      font-size: 18px;
+    }
   </style>
 </head>
 <body>
 
-  <div class="timeline-filter-bar">
-    <span class="timeline-filter-label">Filter by tag:</span>
-    <button class="timeline-filter-btn is-active" data-filter="all">All</button>
-    <button class="timeline-filter-btn" data-filter="hyperfertility">Hyperfertility &amp; sexual deviance</button>
-    <button class="timeline-filter-btn" data-filter="pain">Pain insensitivity</button>
-    <button class="timeline-filter-btn" data-filter="inferiority">Biological differences &amp; inferiority</button>
-    <button class="timeline-filter-btn" data-filter="utility">Biological utility</button>
-  </div>
+<!-- ── Filter bar ── -->
+<div id="filter-bar">
+  <label>Filter by tag:</label>
 
-  <div id="timeline-loading">Loading timeline…</div>
-  <div id="timeline-embed" style="display:none;"></div>
+  <button class="tag-btn all active" data-tag="all">All events</button>
+  <button class="tag-btn inactive" data-tag="hyperfertility">Hyperfertility &amp; sexual deviance</button>
+  <button class="tag-btn inactive" data-tag="pain">Pain insensitivity</button>
+  <button class="tag-btn inactive" data-tag="biological-diff">Biological differences &amp; inferiority</button>
+  <button class="tag-btn inactive" data-tag="biological-util">Biological utility</button>
 
-  <script src="https://cdn.knightlab.com/libs/timeline3/latest/js/timeline.js"></script>
-  <script>
+  <!--
+    To add a new tag:
+      1. Add a <button> here:
+            <button class="tag-btn inactive" data-tag="my-key">My Label</button>
+      2. Add a color in the <style> block:
+            .tag-btn[data-tag="my-key"] { --c: #hexcolor; }
+      3. Add an entry in TAG_MAP in the <script> below:
+            "my-key": "Exact text from your sheet's Tag column",
+      4. In your Google Sheet, type that exact text in the Tag column.
+         Multiple tags per event: separate with semicolons, e.g.
+            Pain insensitivity; Biological utility
+  -->
+</div>
 
-    // ─── Tag config ───────────────────────────────────────────────────────────
+<div id="timeline-embed"></div>
+<div id="no-results">No events match this tag.</div>
 
-    const TAG_CONFIG = {
-      hyperfertility: {
-        label:      "Hyperfertility & sexual deviance",
-        groupValue: "Hyperfertility & sexual deviance",
-        color:      "#7c3aed"
+<script>
+  // ─────────────────────────────────────────────────────────────────────────
+  // CONFIGURATION — edit these two things
+  // ─────────────────────────────────────────────────────────────────────────
+
+  // Your published Google Sheet CSV URL
+  // (File → Share → Publish to web → select sheet → CSV → Publish → copy URL)
+  const SHEET_CSV_URL = "https://docs.google.com/spreadsheets/d/1eIUpKhQ9ijmtW2_bA2fn2-EkGjdgpnU7id0kVeewVO0/pub?output=csv";
+
+  // Maps each button's data-tag to the exact string used in the sheet's Tag column.
+  // Events can have MULTIPLE tags in the sheet, separated by semicolons:
+  //   e.g. "Pain insensitivity; Biological utility"
+  const TAG_MAP = {
+    "hyperfertility":   "Hyperfertility & sexual deviance",
+    "pain":             "Pain insensitivity",
+    "biological-diff":  "Biological differences & inferiority",
+    "biological-util":  "Biological utility",
+  };
+
+  // ─────────────────────────────────────────────────────────────────────────
+  // STATE
+  // ─────────────────────────────────────────────────────────────────────────
+  let allEvents = [];
+  let timeline  = null;
+  let activeTag = "all";
+
+  // ─────────────────────────────────────────────────────────────────────────
+  // CSV PARSING
+  // ─────────────────────────────────────────────────────────────────────────
+  function parseCSV(text) {
+    const rows = [];
+    let row = [], field = "", inQuote = false;
+    for (let i = 0; i < text.length; i++) {
+      const ch = text[i], next = text[i + 1];
+      if (inQuote) {
+        if (ch === '"' && next === '"') { field += '"'; i++; }
+        else if (ch === '"')            { inQuote = false; }
+        else                            { field += ch; }
+      } else {
+        if      (ch === '"')  { inQuote = true; }
+        else if (ch === ',')  { row.push(field.trim()); field = ""; }
+        else if (ch === '\n' || (ch === '\r' && next === '\n')) {
+          if (ch === '\r') i++;
+          row.push(field.trim()); rows.push(row); row = []; field = "";
+        } else { field += ch; }
+      }
+    }
+    if (field || row.length) { row.push(field.trim()); rows.push(row); }
+    return rows;
+  }
+
+  function csvToObjects(rows) {
+    if (rows.length < 2) return [];
+    const headers = rows[0].map(h => h.toLowerCase().trim());
+    return rows.slice(1).map(row => {
+      const obj = {};
+      headers.forEach((h, i) => { obj[h] = row[i] || ""; });
+      return obj;
+    });
+  }
+
+  // ─────────────────────────────────────────────────────────────────────────
+  // TAG PARSING
+  // Splits "Pain insensitivity; Biological utility" → ["Pain insensitivity", "Biological utility"]
+  // ─────────────────────────────────────────────────────────────────────────
+  function parseTags(tagCell) {
+    if (!tagCell) return [];
+    return tagCell.split(";").map(t => t.trim()).filter(Boolean);
+  }
+
+  // ─────────────────────────────────────────────────────────────────────────
+  // CONVERT SHEET ROW → TimelineJS event object
+  // ─────────────────────────────────────────────────────────────────────────
+  function rowToEvent(row) {
+    if (!row["year"] && !row["headline"]) return null;
+
+    const makeDate = (y, m, d, t) => {
+      const date = {};
+      if (y) date.year  = parseInt(y) || 0;
+      if (m) date.month = parseInt(m) || undefined;
+      if (d) date.day   = parseInt(d) || undefined;
+      if (t) {
+        const [hh, mm, ss] = t.split(":");
+        if (hh) date.hour   = parseInt(hh);
+        if (mm) date.minute = parseInt(mm);
+        if (ss) date.second = parseInt(ss);
+      }
+      return date;
+    };
+
+    const event = {
+      start_date: makeDate(row["year"], row["month"], row["day"], row["time"]),
+      text: {
+        headline: row["headline"] || "",
+        text:     row["text"]     || "",
       },
-      pain: {
-        label:      "Pain insensitivity",
-        groupValue: "
+      _tags: parseTags(row["tag"]),  // array of tag strings for filtering
+    };
+
+    if (row["display date"]) event.start_date.display_date = row["display date"];
+
+    if (row["end year"]) {
+      event.end_date = makeDate(row["end year"], row["end month"], row["end day"], row["end time"]);
+    }
+
+    if (row["media"]) {
+      event.media = {
+        url:       row["media"],
+        credit:    row["media credit"]    || "",
+        caption:   row["media caption"]   || "",
+        thumbnail: row["media thumbnail"] || "",
+      };
+    }
+
+    if (row["group"])      event.group = row["group"];
+    if (row["type"])       event.type  = row["type"].toLowerCase();
+
+    if (row["background"]) {
+      const bg = row["background"].trim();
+      event.background = bg.startsWith("http") ? { url: bg } : { color: bg };
+    }
+
+    return event;
+  }
+
+  // ─────────────────────────────────────────────────────────────────────────
+  // BUILD TimelineJS JSON
+  // ─────────────────────────────────────────────────────────────────────────
+  function buildTimelineData(events) {
+    const titleSlide = events.find(e => e.type === "title");
+    const slides     = events.filter(e => e.type !== "title" && e.type !== "era");
+    const eras       = events.filter(e => e.type === "era");
+    const data = { events: slides };
+    if (titleSlide) data.title = titleSlide;
+    if (eras.length) data.eras = eras;
+    return data;
+  }
+
+  // ─────────────────────────────────────────────────────────────────────────
+  // RENDER TIMELINE
+  // ─────────────────────────────────────────────────────────────────────────
+  function renderTimeline(events) {
+    const embed    = document.getElementById("timeline-embed");
+    const noResult = document.getElementById("no-results");
+
+    if (!events.length) {
+      embed.style.display    = "none";
+      noResult.style.display = "block";
+      return;
+    }
+
+    embed.style.display    = "block";
+    noResult.style.display = "none";
+    embed.innerHTML = "";
+
+    const data = buildTimelineData(events);
+    timeline = new TL.Timeline("timeline-embed", data, {
+      timenav_position: "bottom",
+      optimal_tick_width: 100,
+    });
+  }
+
+  // ─────────────────────────────────────────────────────────────────────────
+  // FILTER
+  // An event matches if ANY of its tags equals the selected tag label.
+  // Title slides always pass through.
+  // ─────────────────────────────────────────────────────────────────────────
+  function applyFilter(tag) {
+    activeTag = tag;
+    let filtered;
+
+    if (tag === "all") {
+      filtered = allEvents;
+    } else {
+      const sheetLabel = TAG_MAP[tag] || tag;
+      filtered = allEvents.filter(e => {
+        if (e.type === "title") return true;           // always keep title slide
+        return e._tags.includes(sheetLabel);
+      });
+    }
+
+    renderTimeline(filtered);
+  }
+
+  // ─────────────────────────────────────────────────────────────────────────
+  // BUTTON INTERACTIONS
+  // ─────────────────────────────────────────────────────────────────────────
+  document.querySelectorAll(".tag-btn").forEach(btn => {
+    btn.addEventListener("click", () => {
+      const tag = btn.dataset.tag;
+
+      // Reset all buttons to inactive
+      document.querySelectorAll(".tag-btn").forEach(b => {
+        b.classList.remove("active");
+        b.classList.add("inactive");
+      });
+
+      // Activate the clicked button (special handling for "all")
+      const allBtn = document.querySelector(".tag-btn.all");
+      if (tag === "all") {
+        allBtn.classList.add("active");
+        allBtn.classList.remove("inactive");
+      } else {
+        allBtn.classList.remove("active");
+        allBtn.classList.add("inactive");
+        btn.classList.add("active");
+        btn.classList.remove("inactive");
+      }
+
+      applyFilter(tag);
+    });
+  });
+
+  // ─────────────────────────────────────────────────────────────────────────
+  // BOOT
+  // ─────────────────────────────────────────────────────────────────────────
+  async function init() {
+    try {
+      const resp = await fetch(SHEET_CSV_URL);
+      if (!resp.ok) throw new Error(`HTTP ${resp.status}`);
+      const text = await resp.text();
+      const rows = parseCSV(text);
+      const objs = csvToObjects(rows);
+      allEvents  = objs.map(rowToEvent).filter(Boolean);
+      applyFilter("all");
+    } catch (err) {
+      document.getElementById("timeline-embed").innerHTML =
+        `<p style="padding:40px;color:red;">
+          Could not load timeline data.<br>
+          Make sure your Google Sheet is published to the web
+          (File → Share → Publish to web → CSV).<br>
+          Error: ${err.message}
+        </p>`;
+      console.error(err);
+    }
+  }
+
+  init();
+</script>
+</body>
+</html>
