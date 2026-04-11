@@ -47,7 +47,7 @@
       transition: opacity 0.15s;
     }
 
-    .timeline-filter-btn[data-filter="all"]           { background: #444444; }
+    .timeline-filter-btn[data-filter="all"]            { background: #444444; }
     .timeline-filter-btn[data-filter="hyperfertility"] { background: #7c3aed; }
     .timeline-filter-btn[data-filter="pain"]           { background: #dc2626; }
     .timeline-filter-btn[data-filter="inferiority"]    { background: #2563eb; }
@@ -62,6 +62,15 @@
     #timeline-embed {
       width: 100%;
       height: 650px;
+    }
+
+    #timeline-loading {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      height: 650px;
+      font-size: 15px;
+      color: #888;
     }
 
     .event-pill {
@@ -81,32 +90,6 @@
     .event-pill.tag-pain           { background: #dc2626; }
     .event-pill.tag-inferiority    { background: #2563eb; }
     .event-pill.tag-utility        { background: #16a34a; }
-
-    /*
-     * Filtered-out MARKERS: collapse visually but keep space so layout
-     * doesn't jump. KnightLab positions markers absolutely, so this is safe.
-     */
-    .tl-timemarker.is-filtered-out {
-      opacity: 0 !important;
-      pointer-events: none !important;
-      cursor: default !important;
-    }
-
-    /*
-     * Filtered-out SLIDES: dim with an overlay instead of display:none
-     * so KnightLab's internal slide index never breaks.
-     */
-    .tl-slide.is-filtered-out {
-      position: relative;
-    }
-    .tl-slide.is-filtered-out::after {
-      content: '';
-      position: absolute;
-      inset: 0;
-      background: rgba(255,255,255,0.82);
-      z-index: 10;
-      pointer-events: none;
-    }
   </style>
 </head>
 <body>
@@ -120,217 +103,165 @@
     <button class="timeline-filter-btn" data-filter="utility">Biological utility</button>
   </div>
 
-  <div id="timeline-embed"></div>
+  <div id="timeline-loading">Loading timeline…</div>
+  <div id="timeline-embed" style="display:none;"></div>
 
   <script src="https://cdn.knightlab.com/libs/timeline3/latest/js/timeline.js"></script>
   <script>
-    const SHEET_URL = "https://docs.google.com/spreadsheets/d/e/2PACX-1vSrFsEAi3oN7zJZMshHsqHT7jAk0Nt4iM_uL03vN5KmABk79tknJ-NXnBS1V6WulB_lJwg4b2qmi_FC/pubhtml";
 
-    const timeline = new TL.Timeline("timeline-embed", SHEET_URL, {
-      initial_zoom: 2
-    });
-
-    // ─── Tag config ──────────────────────────────────────────────────────────
+    // ─── Tag config ───────────────────────────────────────────────────────────
+    // "groupValue" must match exactly what you type in the Group column of your sheet.
 
     const TAG_CONFIG = {
       hyperfertility: {
-        label: "Hyperfertility & sexual deviance",
-        color: "#7c3aed",
-        // strings to look for in the Group column (case-insensitive)
-        keywords: ["hyperfertility", "sexual deviance"]
+        label:      "Hyperfertility & sexual deviance",
+        groupValue: "Hyperfertility & sexual deviance",
+        color:      "#7c3aed"
       },
       pain: {
-        label: "Pain insensitivity",
-        color: "#dc2626",
-        keywords: ["pain insensitivity"]
+        label:      "Pain insensitivity",
+        groupValue: "Pain insensitivity",
+        color:      "#dc2626"
       },
       inferiority: {
-        label: "Biological differences & inferiority",
-        color: "#2563eb",
-        keywords: ["biological differences", "inferiority"]
+        label:      "Biological differences & inferiority",
+        groupValue: "Biological differences & inferiority",
+        color:      "#2563eb"
       },
       utility: {
-        label: "Biological utility",
-        color: "#16a34a",
-        keywords: ["biological utility"]
+        label:      "Biological utility",
+        groupValue: "Biological utility",
+        color:      "#16a34a"
       }
     };
 
-    // ─── State ───────────────────────────────────────────────────────────────
+    const SHEET_CSV_URL =
+      "https://docs.google.com/spreadsheets/d/e/2PACX-1vSrFsEAi3oN7zJZMshHsqHT7jAk0Nt4iM_uL03vN5KmABk79tknJ-NXnBS1V6WulB_lJwg4b2qmi_FC/pub?output=csv";
 
+    // ─── State ────────────────────────────────────────────────────────────────
+
+    let allRows   = [];   // parsed CSV rows (objects), title row first
+    let timeline  = null;
     let currentFilter = "all";
 
-    /*
-     * eventTags[i] = array of tag keys for the i-th event
-     * (index 0 = first real event after the title slide)
-     * Built once from KnightLab's internal data after `loaded`.
-     */
-    let eventTags = [];
+    // ─── CSV parser ───────────────────────────────────────────────────────────
+    // Handles quoted fields and embedded commas/newlines.
 
-    // ─── Helpers ─────────────────────────────────────────────────────────────
+    function parseCSV(text) {
+      const rows = [];
+      let row = [], field = "", inQuotes = false;
 
-    function tagsFromText(text) {
-      const t = (text || "").toLowerCase();
-      return Object.entries(TAG_CONFIG)
-        .filter(([, cfg]) => cfg.keywords.some(kw => t.includes(kw)))
-        .map(([key]) => key);
-    }
+      for (let i = 0; i < text.length; i++) {
+        const ch = text[i], next = text[i + 1];
 
-    /*
-     * Read tags straight from KnightLab's parsed data object.
-     * The "Group" column ends up in event.group (TL3 internal field).
-     * Fall back to headline + text if group is empty.
-     */
-    function buildEventTagsFromData() {
-      eventTags = [];
-      try {
-        const events = timeline._data && timeline._data.events;
-        if (!events) return;
-
-        events.forEach(ev => {
-          const groupText  = (ev.group        || "");
-          const titleText  = (ev.text && ev.text.headline ? ev.text.headline : "");
-          const bodyText   = (ev.text && ev.text.text     ? ev.text.text     : "");
-          const combined   = [groupText, titleText, bodyText].join(" ");
-          eventTags.push(tagsFromText(combined));
-        });
-      } catch(e) {
-        console.warn("Could not read timeline._data.events:", e);
+        if (inQuotes) {
+          if (ch === '"' && next === '"') { field += '"'; i++; }
+          else if (ch === '"')           { inQuotes = false; }
+          else                           { field += ch; }
+        } else {
+          if      (ch === '"')  { inQuotes = true; }
+          else if (ch === ',')  { row.push(field.trim()); field = ""; }
+          else if (ch === '\n') { row.push(field.trim()); rows.push(row); row = []; field = ""; }
+          else if (ch === '\r') { /* skip */ }
+          else                  { field += ch; }
+        }
       }
-    }
+      if (field || row.length) { row.push(field.trim()); rows.push(row); }
 
-    // ─── DOM enhancement ─────────────────────────────────────────────────────
-
-    /*
-     * Tag-classify slide DOM nodes.
-     * Slides are in order: [title-slide, event0, event1, ...]
-     * eventTags[i] corresponds to slides[i+1].
-     */
-    function classifySlides() {
-      const slides = document.querySelectorAll(".tl-slide");
-      const tagKeys = Object.keys(TAG_CONFIG);
-
-      slides.forEach((slide, idx) => {
-        // remove old tag classes
-        tagKeys.forEach(k => slide.classList.remove(`tag-${k}`));
-        slide.classList.remove("alt-dark", "alt-light");
-
-        if (slide.classList.contains("tl-title-slide")) return;
-
-        const eventIdx = idx - 1; // offset past title slide
-        const tags = eventTags[eventIdx] || tagsFromText(slide.textContent);
-        tags.forEach(tag => slide.classList.add(`tag-${tag}`));
-      });
-
-      // Alternating dark/light on non-title slides
-      const regularSlides = Array.from(slides).filter(s => !s.classList.contains("tl-title-slide"));
-      regularSlides.forEach((slide, i) => {
-        slide.classList.add(i % 2 === 0 ? "alt-dark" : "alt-light");
+      const headers = rows[0].map(h => h.toLowerCase().trim());
+      return rows.slice(1).map(r => {
+        const obj = {};
+        headers.forEach((h, i) => { obj[h] = r[i] || ""; });
+        return obj;
       });
     }
 
-    /*
-     * Tag-classify marker DOM nodes.
-     * Markers appear in DOM order matching events (no title-slide offset).
-     */
-    function classifyMarkers() {
-      const markers = document.querySelectorAll(".tl-timemarker");
-      const tagKeys  = Object.keys(TAG_CONFIG);
+    // ─── Row → KnightLab event object ─────────────────────────────────────────
 
-      markers.forEach((marker, idx) => {
-        tagKeys.forEach(k => marker.classList.remove(`tag-${k}`));
+    function rowToEvent(row) {
+      // date fields
+      const startDate = {
+        year:  row["year"]  || undefined,
+        month: row["month"] || undefined,
+        day:   row["day"]   || undefined,
+        hour:  row["time"]  ? row["time"].split(":")[0] : undefined,
+        minute:row["time"]  ? row["time"].split(":")[1] : undefined
+      };
 
-        const tags = eventTags[idx] || tagsFromText(marker.textContent);
-        tags.forEach(tag => marker.classList.add(`tag-${tag}`));
-      });
+      const endDate = row["end year"] ? {
+        year:  row["end year"]   || undefined,
+        month: row["end month"]  || undefined,
+        day:   row["end day"]    || undefined
+      } : undefined;
+
+      const event = {
+        start_date:   startDate,
+        text: {
+          headline: row["headline"] || "",
+          text:     row["text"]     || ""
+        }
+      };
+
+      if (endDate)              event.end_date     = endDate;
+      if (row["display date"])  event.display_date = row["display date"];
+      if (row["group"])         event.group        = row["group"];
+      if (row["background"])    event.background   = { color: row["background"] };
+
+      if (row["media"]) {
+        event.media = {
+          url:     row["media"],
+          credit:  row["media credit"]  || "",
+          caption: row["media caption"] || ""
+        };
+        if (row["media thumbnail"]) event.media.thumbnail = row["media thumbnail"];
+      }
+
+      return event;
     }
 
-    function addSlidePills() {
-      const slides = document.querySelectorAll(".tl-slide");
+    // ─── Build TL.Timeline JSON from rows ────────────────────────────────────
 
-      slides.forEach((slide, idx) => {
-        if (slide.classList.contains("tl-title-slide")) return;
+    function buildTimelineJSON(rows) {
+      // The "title" row (Type = title) becomes the title slide
+      const titleRow  = rows.find(r => (r["type"] || "").toLowerCase() === "title");
+      const eventRows = rows.filter(r => (r["type"] || "").toLowerCase() !== "title");
 
-        const headline = slide.querySelector(".tl-headline");
-        if (!headline) return;
-
-        // clear old pills
-        headline.querySelectorAll(".event-pill").forEach(p => p.remove());
-
-        const eventIdx = idx - 1;
-        const tags = eventTags[eventIdx] || tagsFromText(slide.textContent);
-
-        tags.forEach(tag => {
-          const cfg = TAG_CONFIG[tag];
-          if (!cfg) return;
-          const pill = document.createElement("span");
-          pill.className = `event-pill tag-${tag}`;
-          pill.textContent = cfg.label;
-          headline.appendChild(pill);
-        });
-      });
+      const json = { events: eventRows.map(rowToEvent) };
+      if (titleRow) json.title = rowToEvent(titleRow);
+      return json;
     }
 
-    // ─── Filtering ───────────────────────────────────────────────────────────
+    // ─── Filter rows and re-render ────────────────────────────────────────────
 
-    function applyFilter(tag) {
-      currentFilter = tag;
+    function renderTimeline(filter) {
+      currentFilter = filter;
 
       // Update button states
       document.querySelectorAll(".timeline-filter-btn").forEach(btn => {
-        btn.classList.toggle("is-active", btn.dataset.filter === tag);
+        btn.classList.toggle("is-active", btn.dataset.filter === filter);
       });
 
-      // Filter slides
-      document.querySelectorAll(".tl-slide").forEach((slide, idx) => {
-        slide.classList.remove("is-filtered-out");
-
-        if (slide.classList.contains("tl-title-slide")) {
-          if (tag !== "all") slide.classList.add("is-filtered-out");
-          return;
-        }
-
-        if (tag !== "all" && !slide.classList.contains(`tag-${tag}`)) {
-          slide.classList.add("is-filtered-out");
-        }
+      // Choose which event rows to include
+      const eventRows = allRows.filter(r => {
+        if ((r["type"] || "").toLowerCase() === "title") return false;
+        if (filter === "all") return true;
+        const cfg = TAG_CONFIG[filter];
+        return cfg && (r["group"] || "").toLowerCase() === cfg.groupValue.toLowerCase();
       });
 
-      // Filter markers
-      document.querySelectorAll(".tl-timemarker").forEach((marker, idx) => {
-        marker.classList.remove("is-filtered-out");
+      // Always keep the title row
+      const titleRow = allRows.find(r => (r["type"] || "").toLowerCase() === "title");
 
-        if (tag !== "all" && !marker.classList.contains(`tag-${tag}`)) {
-          marker.classList.add("is-filtered-out");
-        }
-      });
-    }
+      const rowsForRender = titleRow
+        ? [titleRow, ...eventRows]
+        : eventRows;
 
-    // ─── Orchestration ───────────────────────────────────────────────────────
+      const json = buildTimelineJSON(rowsForRender);
 
-    function enhanceTimeline() {
-      classifySlides();
-      classifyMarkers();
-      addSlidePills();
-      applyFilter(currentFilter);
-    }
+      // Destroy old instance and clear container
+      if (timeline) {
+        try { timeline.destroy(); } catch(e) {}
+        timeline = null;
+      }
 
-    timeline.on("loaded", () => {
-      // Build tag index from internal data first (most reliable)
-      buildEventTagsFromData();
-      // Then enhance DOM (give KnightLab a moment to finish painting)
-      setTimeout(enhanceTimeline, 300);
-    });
-
-    timeline.on("change", () => {
-      // Re-apply on navigation (pills may be added to newly-visible slides)
-      setTimeout(enhanceTimeline, 500);
-    });
-
-    // ─── Button listeners ────────────────────────────────────────────────────
-
-    document.querySelectorAll(".timeline-filter-btn").forEach(btn => {
-      btn.addEventListener("click", () => applyFilter(btn.dataset.filter));
-    });
-  </script>
-</body>
-</html>
+      const embed = document.getElementById("timeline-em
