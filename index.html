@@ -43,29 +43,18 @@
       font-weight: 600;
       cursor: pointer;
       color: white;
+      opacity: 0.55;
+      transition: opacity 0.15s;
     }
 
-    .timeline-filter-btn[data-filter="all"] {
-      background: #444444;
-    }
-
-    .timeline-filter-btn[data-filter="hyperfertility"] {
-      background: #7c3aed;
-    }
-
-    .timeline-filter-btn[data-filter="pain"] {
-      background: #dc2626;
-    }
-
-    .timeline-filter-btn[data-filter="inferiority"] {
-      background: #2563eb;
-    }
-
-    .timeline-filter-btn[data-filter="utility"] {
-      background: #16a34a;
-    }
+    .timeline-filter-btn[data-filter="all"]           { background: #444444; }
+    .timeline-filter-btn[data-filter="hyperfertility"] { background: #7c3aed; }
+    .timeline-filter-btn[data-filter="pain"]           { background: #dc2626; }
+    .timeline-filter-btn[data-filter="inferiority"]    { background: #2563eb; }
+    .timeline-filter-btn[data-filter="utility"]        { background: #16a34a; }
 
     .timeline-filter-btn.is-active {
+      opacity: 1;
       outline: 2px solid #111111;
       outline-offset: 2px;
     }
@@ -89,18 +78,34 @@
     }
 
     .event-pill.tag-hyperfertility { background: #7c3aed; }
-    .event-pill.tag-pain { background: #dc2626; }
-    .event-pill.tag-inferiority { background: #2563eb; }
-    .event-pill.tag-utility { background: #16a34a; }
+    .event-pill.tag-pain           { background: #dc2626; }
+    .event-pill.tag-inferiority    { background: #2563eb; }
+    .event-pill.tag-utility        { background: #16a34a; }
 
-    /* hide filtered-out markers */
-    .tl-timemarker.is-hidden-by-filter {
-      display: none !important;
+    /*
+     * Filtered-out MARKERS: collapse visually but keep space so layout
+     * doesn't jump. KnightLab positions markers absolutely, so this is safe.
+     */
+    .tl-timemarker.is-filtered-out {
+      opacity: 0 !important;
+      pointer-events: none !important;
+      cursor: default !important;
     }
 
-    /* hide filtered-out slides */
-    .tl-slide.is-hidden-by-filter {
-      display: none !important;
+    /*
+     * Filtered-out SLIDES: dim with an overlay instead of display:none
+     * so KnightLab's internal slide index never breaks.
+     */
+    .tl-slide.is-filtered-out {
+      position: relative;
+    }
+    .tl-slide.is-filtered-out::after {
+      content: '';
+      position: absolute;
+      inset: 0;
+      background: rgba(255,255,255,0.82);
+      z-index: 10;
+      pointer-events: none;
     }
   </style>
 </head>
@@ -109,9 +114,9 @@
   <div class="timeline-filter-bar">
     <span class="timeline-filter-label">Filter by tag:</span>
     <button class="timeline-filter-btn is-active" data-filter="all">All</button>
-    <button class="timeline-filter-btn" data-filter="hyperfertility">Hyperfertility & sexual deviance</button>
+    <button class="timeline-filter-btn" data-filter="hyperfertility">Hyperfertility &amp; sexual deviance</button>
     <button class="timeline-filter-btn" data-filter="pain">Pain insensitivity</button>
-    <button class="timeline-filter-btn" data-filter="inferiority">Biological differences & inferiority</button>
+    <button class="timeline-filter-btn" data-filter="inferiority">Biological differences &amp; inferiority</button>
     <button class="timeline-filter-btn" data-filter="utility">Biological utility</button>
   </div>
 
@@ -119,163 +124,188 @@
 
   <script src="https://cdn.knightlab.com/libs/timeline3/latest/js/timeline.js"></script>
   <script>
-    const source = "https://docs.google.com/spreadsheets/d/e/2PACX-1vSrFsEAi3oN7zJZMshHsqHT7jAk0Nt4iM_uL03vN5KmABk79tknJ-NXnBS1V6WulB_lJwg4b2qmi_FC/pubhtml";
+    const SHEET_URL = "https://docs.google.com/spreadsheets/d/e/2PACX-1vSrFsEAi3oN7zJZMshHsqHT7jAk0Nt4iM_uL03vN5KmABk79tknJ-NXnBS1V6WulB_lJwg4b2qmi_FC/pubhtml";
 
-    const timeline = new TL.Timeline("timeline-embed", source, {
+    const timeline = new TL.Timeline("timeline-embed", SHEET_URL, {
       initial_zoom: 2
     });
 
+    // ─── Tag config ──────────────────────────────────────────────────────────
+
+    const TAG_CONFIG = {
+      hyperfertility: {
+        label: "Hyperfertility & sexual deviance",
+        color: "#7c3aed",
+        // strings to look for in the Group column (case-insensitive)
+        keywords: ["hyperfertility", "sexual deviance"]
+      },
+      pain: {
+        label: "Pain insensitivity",
+        color: "#dc2626",
+        keywords: ["pain insensitivity"]
+      },
+      inferiority: {
+        label: "Biological differences & inferiority",
+        color: "#2563eb",
+        keywords: ["biological differences", "inferiority"]
+      },
+      utility: {
+        label: "Biological utility",
+        color: "#16a34a",
+        keywords: ["biological utility"]
+      }
+    };
+
+    // ─── State ───────────────────────────────────────────────────────────────
+
     let currentFilter = "all";
 
-    function normalizeText(text) {
-      return (text || "").toLowerCase().trim();
+    /*
+     * eventTags[i] = array of tag keys for the i-th event
+     * (index 0 = first real event after the title slide)
+     * Built once from KnightLab's internal data after `loaded`.
+     */
+    let eventTags = [];
+
+    // ─── Helpers ─────────────────────────────────────────────────────────────
+
+    function tagsFromText(text) {
+      const t = (text || "").toLowerCase();
+      return Object.entries(TAG_CONFIG)
+        .filter(([, cfg]) => cfg.keywords.some(kw => t.includes(kw)))
+        .map(([key]) => key);
     }
 
-    function getTagsFromText(text) {
-      const t = normalizeText(text);
-      const tags = [];
+    /*
+     * Read tags straight from KnightLab's parsed data object.
+     * The "Group" column ends up in event.group (TL3 internal field).
+     * Fall back to headline + text if group is empty.
+     */
+    function buildEventTagsFromData() {
+      eventTags = [];
+      try {
+        const events = timeline._data && timeline._data.events;
+        if (!events) return;
 
-      if (t.includes("hyperfertility") || t.includes("sexual deviance")) {
-        tags.push("hyperfertility");
+        events.forEach(ev => {
+          const groupText  = (ev.group        || "");
+          const titleText  = (ev.text && ev.text.headline ? ev.text.headline : "");
+          const bodyText   = (ev.text && ev.text.text     ? ev.text.text     : "");
+          const combined   = [groupText, titleText, bodyText].join(" ");
+          eventTags.push(tagsFromText(combined));
+        });
+      } catch(e) {
+        console.warn("Could not read timeline._data.events:", e);
       }
-
-      if (t.includes("pain insensitivity")) {
-        tags.push("pain");
-      }
-
-      if (t.includes("biological differences") || t.includes("inferiority")) {
-        tags.push("inferiority");
-      }
-
-      if (t.includes("biological utility")) {
-        tags.push("utility");
-      }
-
-      return tags;
     }
 
-    function getTagLabel(tag) {
-      if (tag === "hyperfertility") return "Hyperfertility & sexual deviance";
-      if (tag === "pain") return "Pain insensitivity";
-      if (tag === "inferiority") return "Biological differences & inferiority";
-      if (tag === "utility") return "Biological utility";
-      return null;
-    }
+    // ─── DOM enhancement ─────────────────────────────────────────────────────
 
-    function getSlideCombinedText(slide) {
-      const groupEl = slide.querySelector(".tl-slide-group");
-      const groupText = groupEl ? groupEl.textContent : "";
-      return groupText + " " + (slide.textContent || "");
-    }
-
+    /*
+     * Tag-classify slide DOM nodes.
+     * Slides are in order: [title-slide, event0, event1, ...]
+     * eventTags[i] corresponds to slides[i+1].
+     */
     function classifySlides() {
       const slides = document.querySelectorAll(".tl-slide");
+      const tagKeys = Object.keys(TAG_CONFIG);
 
-      slides.forEach((slide) => {
-        slide.classList.remove(
-          "tag-hyperfertility",
-          "tag-pain",
-          "tag-inferiority",
-          "tag-utility",
-          "alt-dark",
-          "alt-light",
-          "is-hidden-by-filter"
-        );
+      slides.forEach((slide, idx) => {
+        // remove old tag classes
+        tagKeys.forEach(k => slide.classList.remove(`tag-${k}`));
+        slide.classList.remove("alt-dark", "alt-light");
 
-        const tags = getTagsFromText(getSlideCombinedText(slide));
+        if (slide.classList.contains("tl-title-slide")) return;
 
-        tags.forEach(tag => {
-          slide.classList.add(`tag-${tag}`);
-        });
+        const eventIdx = idx - 1; // offset past title slide
+        const tags = eventTags[eventIdx] || tagsFromText(slide.textContent);
+        tags.forEach(tag => slide.classList.add(`tag-${tag}`));
       });
 
-      const regularSlides = Array.from(slides).filter(slide => {
-        return !slide.classList.contains("tl-title-slide");
-      });
-
-      regularSlides.forEach((slide, index) => {
-        if (index % 2 === 0) {
-          slide.classList.add("alt-dark");
-        } else {
-          slide.classList.add("alt-light");
-        }
+      // Alternating dark/light on non-title slides
+      const regularSlides = Array.from(slides).filter(s => !s.classList.contains("tl-title-slide"));
+      regularSlides.forEach((slide, i) => {
+        slide.classList.add(i % 2 === 0 ? "alt-dark" : "alt-light");
       });
     }
 
+    /*
+     * Tag-classify marker DOM nodes.
+     * Markers appear in DOM order matching events (no title-slide offset).
+     */
     function classifyMarkers() {
       const markers = document.querySelectorAll(".tl-timemarker");
+      const tagKeys  = Object.keys(TAG_CONFIG);
 
-      markers.forEach((marker) => {
-        marker.classList.remove(
-          "tag-hyperfertility",
-          "tag-pain",
-          "tag-inferiority",
-          "tag-utility",
-          "is-hidden-by-filter"
-        );
+      markers.forEach((marker, idx) => {
+        tagKeys.forEach(k => marker.classList.remove(`tag-${k}`));
 
-        const tags = getTagsFromText(marker.textContent || "");
-
-        tags.forEach(tag => {
-          marker.classList.add(`tag-${tag}`);
-        });
+        const tags = eventTags[idx] || tagsFromText(marker.textContent);
+        tags.forEach(tag => marker.classList.add(`tag-${tag}`));
       });
     }
 
     function addSlidePills() {
       const slides = document.querySelectorAll(".tl-slide");
 
-      slides.forEach((slide) => {
-        const headline = slide.querySelector(".tl-headline");
-        if (!headline) return;
+      slides.forEach((slide, idx) => {
         if (slide.classList.contains("tl-title-slide")) return;
 
-        headline.querySelectorAll(".event-pill").forEach(pill => pill.remove());
+        const headline = slide.querySelector(".tl-headline");
+        if (!headline) return;
 
-        const tags = getTagsFromText(getSlideCombinedText(slide));
+        // clear old pills
+        headline.querySelectorAll(".event-pill").forEach(p => p.remove());
+
+        const eventIdx = idx - 1;
+        const tags = eventTags[eventIdx] || tagsFromText(slide.textContent);
 
         tags.forEach(tag => {
-          const label = getTagLabel(tag);
-          if (!label) return;
-
+          const cfg = TAG_CONFIG[tag];
+          if (!cfg) return;
           const pill = document.createElement("span");
           pill.className = `event-pill tag-${tag}`;
-          pill.textContent = label;
+          pill.textContent = cfg.label;
           headline.appendChild(pill);
         });
       });
     }
 
+    // ─── Filtering ───────────────────────────────────────────────────────────
+
     function applyFilter(tag) {
       currentFilter = tag;
 
+      // Update button states
       document.querySelectorAll(".timeline-filter-btn").forEach(btn => {
         btn.classList.toggle("is-active", btn.dataset.filter === tag);
       });
 
-      document.querySelectorAll(".tl-slide").forEach(slide => {
-        slide.classList.remove("is-hidden-by-filter");
+      // Filter slides
+      document.querySelectorAll(".tl-slide").forEach((slide, idx) => {
+        slide.classList.remove("is-filtered-out");
 
         if (slide.classList.contains("tl-title-slide")) {
-          if (tag !== "all") {
-            slide.classList.add("is-hidden-by-filter");
-          }
+          if (tag !== "all") slide.classList.add("is-filtered-out");
           return;
         }
 
         if (tag !== "all" && !slide.classList.contains(`tag-${tag}`)) {
-          slide.classList.add("is-hidden-by-filter");
+          slide.classList.add("is-filtered-out");
         }
       });
 
-      document.querySelectorAll(".tl-timemarker").forEach(marker => {
-        marker.classList.remove("is-hidden-by-filter");
+      // Filter markers
+      document.querySelectorAll(".tl-timemarker").forEach((marker, idx) => {
+        marker.classList.remove("is-filtered-out");
 
         if (tag !== "all" && !marker.classList.contains(`tag-${tag}`)) {
-          marker.classList.add("is-hidden-by-filter");
+          marker.classList.add("is-filtered-out");
         }
       });
     }
+
+    // ─── Orchestration ───────────────────────────────────────────────────────
 
     function enhanceTimeline() {
       classifySlides();
@@ -285,17 +315,21 @@
     }
 
     timeline.on("loaded", () => {
-      setTimeout(enhanceTimeline, 250);
+      // Build tag index from internal data first (most reliable)
+      buildEventTagsFromData();
+      // Then enhance DOM (give KnightLab a moment to finish painting)
+      setTimeout(enhanceTimeline, 300);
     });
 
     timeline.on("change", () => {
-      setTimeout(enhanceTimeline, 250);
+      // Re-apply on navigation (pills may be added to newly-visible slides)
+      setTimeout(enhanceTimeline, 500);
     });
 
-    document.querySelectorAll(".timeline-filter-btn").forEach(button => {
-      button.addEventListener("click", () => {
-        applyFilter(button.dataset.filter);
-      });
+    // ─── Button listeners ────────────────────────────────────────────────────
+
+    document.querySelectorAll(".timeline-filter-btn").forEach(btn => {
+      btn.addEventListener("click", () => applyFilter(btn.dataset.filter));
     });
   </script>
 </body>
