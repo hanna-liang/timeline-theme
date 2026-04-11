@@ -95,6 +95,34 @@
       color: #666;
       font-size: 18px;
     }
+
+    /* ── Tag pills shown inside each event headline ── */
+    .event-tag-pills {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 6px;
+      margin-top: 8px;
+      justify-content: center;
+    }
+
+    .event-tag-pill {
+      display: inline-block;
+      padding: 3px 10px;
+      border-radius: 12px;
+      font-size: 11px;
+      font-weight: 700;
+      letter-spacing: 0.04em;
+      text-transform: uppercase;
+      color: #fff;
+      opacity: 0.9;
+    }
+
+    /* Pill colors — must match TAG_MAP keys */
+    .event-tag-pill[data-tag="hyperfertility"]  { background: #c94b4b; }
+    .event-tag-pill[data-tag="pain"]            { background: #4b7fc9; }
+    .event-tag-pill[data-tag="biological-diff"] { background: #7ac94b; }
+    .event-tag-pill[data-tag="biological-util"] { background: #c97a4b; }
+    /* Add more: .event-tag-pill[data-tag="your-key"] { background: #hexcolor; } */
   </style>
 </head>
 <body>
@@ -133,7 +161,7 @@
 
   // Your published Google Sheet CSV URL
   // (File → Share → Publish to web → select sheet → CSV → Publish → copy URL)
-  const SHEET_CSV_URL = "https://docs.google.com/spreadsheets/d/e/2PACX-1vSrFsEAi3oN7zJZMshHsqHT7jAk0Nt4iM_uL03vN5KmABk79tknJ-NXnBS1V6WulB_lJwg4b2qmi_FC/pub?output=csv";
+  const SHEET_CSV_URL = "https://docs.google.com/spreadsheets/d/1eIUpKhQ9ijmtW2_bA2fn2-EkGjdgpnU7id0kVeewVO0/pub?output=csv";
 
   // Maps each button's data-tag to the exact string used in the sheet's Tag column.
   // Events can have MULTIPLE tags in the sheet, separated by semicolons:
@@ -151,6 +179,21 @@
   let allEvents = [];
   let timeline  = null;
   let activeTag = "all";
+
+  // Reverse map: "Pain insensitivity" → "pain"  (for pill CSS class lookup)
+  const REVERSE_TAG_MAP = Object.fromEntries(
+    Object.entries(TAG_MAP).map(([key, val]) => [val, key])
+  );
+
+  // Build the HTML for tag pills to inject under a headline
+  function buildPillsHTML(tags) {
+    if (!tags.length) return "";
+    const pills = tags.map(tag => {
+      const key = REVERSE_TAG_MAP[tag] || "";
+      return `<span class="event-tag-pill" data-tag="${key}">${tag}</span>`;
+    }).join("");
+    return `<div class="event-tag-pills">${pills}</div>`;
+  }
 
   // ─────────────────────────────────────────────────────────────────────────
   // CSV PARSING
@@ -216,13 +259,17 @@
       return date;
     };
 
+    const tags = parseTags(row["tag"]);
+    const pillsHTML = buildPillsHTML(tags);
+
     const event = {
       start_date: makeDate(row["year"], row["month"], row["day"], row["time"]),
       text: {
-        headline: row["headline"] || "",
-        text:     row["text"]     || "",
+        // Append pill badges beneath the headline text (TimelineJS renders headline as HTML)
+        headline: (row["headline"] || "") + pillsHTML,
+        text:     row["text"] || "",
       },
-      _tags: parseTags(row["tag"]),  // array of tag strings for filtering
+      _tags: tags,  // array of tag strings for filtering
     };
 
     if (row["display date"]) event.start_date.display_date = row["display date"];
